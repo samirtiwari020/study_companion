@@ -1,11 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Trophy, Flame, Star, Medal, Zap, Crown } from "lucide-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 
 const badges = [
   { name: "First Steps", icon: Star, earned: true, desc: "Complete your first practice" },
@@ -17,11 +14,11 @@ const badges = [
 ];
 
 const leaderboard = [
-  { rank: 1, name: "Arjun S.", xp: 5200, level: 12 },
-  { rank: 2, name: "Priya M.", xp: 4800, level: 11 },
-  { rank: 3, name: "Rahul K.", xp: 4500, level: 10 },
+  { rank: 1, name: "Arjun S.", xp: 5200, level: 12, isUser: false },
+  { rank: 2, name: "Priya M.", xp: 4800, level: 11, isUser: false },
+  { rank: 3, name: "Rahul K.", xp: 4500, level: 10, isUser: false },
   { rank: 4, name: "You", xp: 2450, level: 7, isUser: true },
-  { rank: 5, name: "Sneha D.", xp: 2200, level: 6 },
+  { rank: 5, name: "Sneha D.", xp: 2200, level: 6, isUser: false },
 ];
 
 export default function Gamification() {
@@ -36,7 +33,6 @@ export default function Gamification() {
         <p className="text-muted-foreground text-sm mt-1">Level up through consistent learning</p>
       </motion.div>
 
-      {/* Level + XP */}
       <motion.div variants={fadeUp} className="glass-card p-6">
         <div className="flex items-center gap-4 mb-4">
           <div className="h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center">
@@ -67,7 +63,6 @@ export default function Gamification() {
         </div>
       </motion.div>
 
-      {/* Badges */}
       <motion.div variants={fadeUp} className="glass-card p-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Medal className="h-4 w-4 text-primary" /> Achievements
@@ -88,7 +83,6 @@ export default function Gamification() {
         </div>
       </motion.div>
 
-      {/* Leaderboard */}
       <motion.div variants={fadeUp} className="glass-card p-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-warning" /> Leaderboard
@@ -98,13 +92,13 @@ export default function Gamification() {
             <div
               key={entry.rank}
               className={`flex items-center gap-4 p-3 rounded-lg ${
-                (entry as any).isUser ? "gradient-primary text-primary-foreground" : "bg-muted/50"
+                entry.isUser ? "gradient-primary text-primary-foreground" : "bg-muted/50"
               }`}
             >
               <span className="font-bold text-lg w-8">{entry.rank}</span>
               <div className="flex-1">
                 <p className="font-medium text-sm">{entry.name}</p>
-                <p className={`text-xs ${(entry as any).isUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}>Level {entry.level}</p>
+                <p className={`text-xs ${entry.isUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}>Level {entry.level}</p>
               </div>
               <span className="font-bold text-sm">{entry.xp.toLocaleString()} XP</span>
             </div>

@@ -1,12 +1,9 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 type Message = { id: number; role: "user" | "ai"; content: string };
 
@@ -43,7 +40,7 @@ export default function AISolver() {
   };
 
   return (
-    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }} className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
+    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } } as Variants} className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
       <motion.div variants={fadeUp} className="mb-4">
         <h1 className="text-2xl font-bold">AI Doubt Solver</h1>
         <p className="text-muted-foreground text-sm mt-1">Get step-by-step explanations for any topic</p>
@@ -85,8 +82,8 @@ export default function AISolver() {
               </div>
               <div className="bg-muted rounded-xl p-3 flex gap-1">
                 <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-pulse-soft" />
-                <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-pulse-soft" style={{ animationDelay: "0.2s" }} />
-                <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-pulse-soft" style={{ animationDelay: "0.4s" }} />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.2s]" />
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-pulse-soft [animation-delay:0.4s]" />
               </div>
             </motion.div>
           )}

@@ -1,21 +1,16 @@
-import { motion } from "framer-motion";
-import { CalendarDays, CheckCircle2, Circle, AlertTriangle, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion, type Variants } from "framer-motion";
+import { CalendarDays, CheckCircle2, Circle, Clock } from "lucide-react";
 import { useState } from "react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 
 const tasks = [
-  { id: 1, topic: "Newton's Laws of Motion", subject: "Physics", priority: "high", completed: false, time: "9:00 AM" },
-  { id: 2, topic: "Organic Chemistry - Alkanes", subject: "Chemistry", priority: "high", completed: false, time: "10:30 AM" },
-  { id: 3, topic: "Integration by Parts", subject: "Mathematics", priority: "medium", completed: true, time: "12:00 PM" },
-  { id: 4, topic: "Cell Division - Mitosis", subject: "Biology", priority: "low", completed: false, time: "2:00 PM" },
-  { id: 5, topic: "Electromagnetic Induction", subject: "Physics", priority: "medium", completed: true, time: "4:00 PM" },
+  { id: 1, topic: "Newton's Laws of Motion", subject: "Physics", priority: "high" as const, completed: false, time: "9:00 AM" },
+  { id: 2, topic: "Organic Chemistry - Alkanes", subject: "Chemistry", priority: "high" as const, completed: false, time: "10:30 AM" },
+  { id: 3, topic: "Integration by Parts", subject: "Mathematics", priority: "medium" as const, completed: true, time: "12:00 PM" },
+  { id: 4, topic: "Cell Division - Mitosis", subject: "Biology", priority: "low" as const, completed: false, time: "2:00 PM" },
+  { id: 5, topic: "Electromagnetic Induction", subject: "Physics", priority: "medium" as const, completed: true, time: "4:00 PM" },
 ];
 
 const priorityStyles = {
@@ -42,7 +37,6 @@ export default function StudyPlanner() {
         <p className="text-muted-foreground text-sm mt-1">AI-generated study schedule for today</p>
       </motion.div>
 
-      {/* Calendar strip */}
       <motion.div variants={fadeUp} className="glass-card p-4">
         <div className="flex items-center gap-2 mb-3">
           <CalendarDays className="h-4 w-4 text-primary" />
@@ -63,7 +57,6 @@ export default function StudyPlanner() {
         </div>
       </motion.div>
 
-      {/* Progress */}
       <motion.div variants={fadeUp} className="glass-card p-4">
         <div className="flex justify-between text-sm mb-2">
           <span className="font-medium">Today's Progress</span>
@@ -74,12 +67,11 @@ export default function StudyPlanner() {
             className="h-full rounded-full gradient-primary"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8 }}
           />
         </div>
       </motion.div>
 
-      {/* Tasks */}
       <motion.div variants={fadeUp} className="space-y-3">
         {taskList.map((task) => (
           <motion.div
@@ -101,7 +93,7 @@ export default function StudyPlanner() {
               <p className="text-xs text-muted-foreground">{task.subject}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${priorityStyles[task.priority as keyof typeof priorityStyles]}`}>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${priorityStyles[task.priority]}`}>
                 {task.priority}
               </span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">

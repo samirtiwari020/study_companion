@@ -1,16 +1,16 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Flame, BarChart3, CalendarClock, Play, BookOpen, RotateCcw, TrendingUp, Brain, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-const stagger = {
+const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08 } },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  show: { opacity: 1, y: 0 },
 };
 
 const stats = [
@@ -40,13 +40,11 @@ const topicPerformance = [
 export default function Dashboard() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
       <motion.div variants={fadeUp}>
         <h1 className="text-2xl md:text-3xl font-bold">Welcome back, Learner 👋</h1>
         <p className="text-muted-foreground mt-1">Here's your study overview for today.</p>
       </motion.div>
 
-      {/* Stats */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <div key={stat.label} className="glass-card-hover p-4 md:p-5">
@@ -63,7 +61,6 @@ export default function Dashboard() {
         ))}
       </motion.div>
 
-      {/* CTAs */}
       <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
         <Link to="/practice">
           <Button variant="gradient" className="gap-2">
@@ -83,7 +80,6 @@ export default function Dashboard() {
       </motion.div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Weekly Progress */}
         <motion.div variants={fadeUp} className="glass-card p-5">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" /> Weekly Progress
@@ -95,7 +91,7 @@ export default function Dashboard() {
                   className="w-full rounded-t-md gradient-primary"
                   initial={{ height: 0 }}
                   animate={{ height: `${d.value}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
                 />
                 <span className="text-[10px] text-muted-foreground">{d.day}</span>
               </div>
@@ -103,7 +99,6 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Topic Performance */}
         <motion.div variants={fadeUp} className="glass-card p-5">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Brain className="h-4 w-4 text-primary" /> Topic Performance
@@ -120,7 +115,7 @@ export default function Dashboard() {
                     className={`h-full rounded-full ${t.color}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${t.score}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
                   />
                 </div>
               </div>

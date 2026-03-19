@@ -1,13 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { CalendarClock, CheckCircle2, Circle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 
 type RevisionItem = { id: number; topic: string; subject: string; due: string; completed: boolean };
 

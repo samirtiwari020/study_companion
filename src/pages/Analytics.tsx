@@ -1,11 +1,8 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { BarChart3, Clock, Target, TrendingUp } from "lucide-react";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 
 const overviewStats = [
   { label: "Overall Accuracy", value: "78%", icon: Target, change: "+5%" },
@@ -15,27 +12,18 @@ const overviewStats = [
 ];
 
 const topics = [
-  { name: "Mechanics", accuracy: 92, status: "strong" },
-  { name: "Thermodynamics", accuracy: 78, status: "strong" },
-  { name: "Organic Chemistry", accuracy: 55, status: "average" },
-  { name: "Calculus", accuracy: 88, status: "strong" },
-  { name: "Optics", accuracy: 42, status: "weak" },
-  { name: "Inorganic Chemistry", accuracy: 65, status: "average" },
-  { name: "Algebra", accuracy: 95, status: "strong" },
-  { name: "Genetics", accuracy: 35, status: "weak" },
+  { name: "Mechanics", accuracy: 92, status: "strong" as const },
+  { name: "Thermodynamics", accuracy: 78, status: "strong" as const },
+  { name: "Organic Chemistry", accuracy: 55, status: "average" as const },
+  { name: "Calculus", accuracy: 88, status: "strong" as const },
+  { name: "Optics", accuracy: 42, status: "weak" as const },
+  { name: "Inorganic Chemistry", accuracy: 65, status: "average" as const },
+  { name: "Algebra", accuracy: 95, status: "strong" as const },
+  { name: "Genetics", accuracy: 35, status: "weak" as const },
 ];
 
-const statusColor = {
-  strong: "bg-success",
-  average: "bg-warning",
-  weak: "bg-destructive",
-};
-
-const statusBadge = {
-  strong: "text-success bg-success/10",
-  average: "text-warning bg-warning/10",
-  weak: "text-destructive bg-destructive/10",
-};
+const statusColor = { strong: "bg-success", average: "bg-warning", weak: "bg-destructive" };
+const statusBadge = { strong: "text-success bg-success/10", average: "text-warning bg-warning/10", weak: "text-destructive bg-destructive/10" };
 
 export default function Analytics() {
   return (
@@ -58,7 +46,6 @@ export default function Analytics() {
         ))}
       </motion.div>
 
-      {/* Accuracy over time chart mock */}
       <motion.div variants={fadeUp} className="glass-card p-5">
         <h3 className="font-semibold mb-4">Accuracy Trend</h3>
         <div className="h-48 flex items-end gap-1">
@@ -78,7 +65,6 @@ export default function Analytics() {
         </div>
       </motion.div>
 
-      {/* Topic breakdown */}
       <motion.div variants={fadeUp} className="glass-card p-5">
         <h3 className="font-semibold mb-4">Topic Breakdown</h3>
         <div className="space-y-3">
@@ -87,14 +73,14 @@ export default function Analytics() {
               <span className="text-sm w-40 truncate">{t.name}</span>
               <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
-                  className={`h-full rounded-full ${statusColor[t.status as keyof typeof statusColor]}`}
+                  className={`h-full rounded-full ${statusColor[t.status]}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${t.accuracy}%` }}
                   transition={{ duration: 0.6, delay: 0.2 }}
                 />
               </div>
               <span className="text-sm font-medium w-10 text-right">{t.accuracy}%</span>
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize ${statusBadge[t.status as keyof typeof statusBadge]}`}>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full capitalize ${statusBadge[t.status]}`}>
                 {t.status}
               </span>
             </div>

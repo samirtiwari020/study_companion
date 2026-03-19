@@ -1,14 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useState } from "react";
 import { BookOpen, Clock, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
+const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 
 const topics = ["Physics", "Chemistry", "Mathematics", "Biology"];
 const difficulties = ["Easy", "Medium", "Hard"];
