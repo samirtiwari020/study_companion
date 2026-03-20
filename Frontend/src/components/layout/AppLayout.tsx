@@ -24,7 +24,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="flex-1 p-4 md:p-6 pb-20 md:pb-6 overflow-auto"
+              className="flex-1 p-4 md:p-6 pb-20 md:pb-6 overflow-auto custom-scrollbar dot-pattern"
             >
               {children}
             </motion.main>
