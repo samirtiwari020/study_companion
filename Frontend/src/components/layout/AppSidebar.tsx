@@ -33,8 +33,9 @@ const mainItems = [
 ];
 
 const toolItems = [
+  { title: "AI One-Pager", url: "/one-pager", icon: FileText },
+  { title: "AI Interviewer", url: "/interview", icon: MessageSquare },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "AI Solver", url: "/ai-solver", icon: MessageSquare },
   { title: "Notes", url: "/notes", icon: FileText },
   { title: "Gamification", url: "/gamification", icon: Trophy },
 ];
