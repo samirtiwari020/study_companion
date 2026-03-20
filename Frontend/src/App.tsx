@@ -16,6 +16,8 @@ import Notes from "./pages/Notes";
 import Gamification from "./pages/Gamification";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import OnePager from "./pages/OnePager";
+import Interview from "./pages/Interview";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/revision" element={<AppLayout><Revision /></AppLayout>} />
             <Route path="/analytics" element={<AppLayout><Analytics /></AppLayout>} />
             <Route path="/ai-solver" element={<AppLayout><AISolver /></AppLayout>} />
+            <Route path="/one-pager" element={<AppLayout><OnePager /></AppLayout>} />
+            <Route path="/interview" element={<AppLayout><Interview /></AppLayout>} />
             <Route path="/notes" element={<AppLayout><Notes /></AppLayout>} />
             <Route path="/gamification" element={<AppLayout><Gamification /></AppLayout>} />
             <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
