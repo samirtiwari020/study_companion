@@ -6,7 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
+import Signup from "./pages/Signup";
 import StudyPlanner from "./pages/StudyPlanner";
 import Practice from "./pages/Practice";
 import Revision from "./pages/Revision";
@@ -27,8 +29,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
             <Route path="/planner" element={<AppLayout><StudyPlanner /></AppLayout>} />
             <Route path="/practice" element={<AppLayout><Practice /></AppLayout>} />
             <Route path="/revision" element={<AppLayout><Revision /></AppLayout>} />

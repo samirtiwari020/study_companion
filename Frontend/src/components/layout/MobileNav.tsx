@@ -1,11 +1,11 @@
-import { LayoutDashboard, BookOpen, MessageSquare, User } from "lucide-react";
+import { LayoutDashboard, BookOpen, MessageCircleQuestion, BarChart3 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Practice", url: "/practice", icon: BookOpen },
-  { title: "AI Solver", url: "/ai-solver", icon: MessageSquare },
-  { title: "Profile", url: "/profile", icon: User },
+  { title: "Doubts", url: "/ai-solver", icon: MessageCircleQuestion },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
 export function MobileNav() {
@@ -16,7 +16,7 @@ export function MobileNav() {
           <NavLink
             key={item.title}
             to={item.url}
-            end={item.url === "/"}
+            end={item.url === "/dashboard"}
             className="flex flex-col items-center gap-1 text-muted-foreground transition-colors"
             activeClassName="text-primary"
           >
