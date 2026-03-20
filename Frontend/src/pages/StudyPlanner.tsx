@@ -14,9 +14,9 @@ import {
   Shield,
   Star
 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 
 const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
@@ -233,14 +233,14 @@ export default function StudyPlanner() {
                           whileHover={{ scale: 1.02, translateY: -2 }}
                           whileTap={{ scale: 0.98 }}
                           className={`relative text-left w-full rounded-2xl p-4 transition-all duration-300 border ${
-                            isCompleted 
-                              ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]" 
+                            isCompleted
+                              ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                               : "glass-card border-border hover:border-primary/30"
                           }`}
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                              <motion.div 
+                              <motion.div
                                 animate={isCompleted ? { scale: [1, 1.2, 1], rotate: [0, 10, 0] } : {}}
                                 className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-colors shadow-sm ${
                                   isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-emerald-500/30" : "bg-muted text-muted-foreground"
@@ -250,7 +250,7 @@ export default function StudyPlanner() {
                               </motion.div>
                               <div>
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block mb-0.5">{day.day}</span>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${isCompleted ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 glow-emerald' : `${conf.bg} ${conf.color} ${conf.border}`}`}>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${isCompleted ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : `${conf.bg} ${conf.color} ${conf.border}`}`}>
                                   {day.subject}
                                 </span>
                               </div>
@@ -265,7 +265,7 @@ export default function StudyPlanner() {
                           <h4 className={`text-base font-bold mb-1 line-clamp-2 ${isCompleted ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
                             {day.topic}
                           </h4>
-                          
+
                           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
                             <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                               <Clock className="h-3.5 w-3.5" /> {day.hours}h Mission
@@ -275,12 +275,12 @@ export default function StudyPlanner() {
                               <span className="text-xs text-muted-foreground font-medium capitalize">{day.priority} impact</span>
                             </div>
                           </div>
-                          
+
                           {/* Success overlay highlight */}
                           {isCompleted && (
-                            <motion.div 
-                              initial={{ opacity: 0 }} 
-                              animate={{ opacity: 1 }} 
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
                               className="absolute inset-0 rounded-2xl border-2 border-emerald-500/50 pointer-events-none"
                             />
                           )}
@@ -291,7 +291,7 @@ export default function StudyPlanner() {
                 </motion.div>
               ))}
             </div>
-            
+
             {/* Gamified summary */}
             <motion.div
               initial={{ opacity: 0 }}
