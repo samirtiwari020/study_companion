@@ -12,6 +12,8 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 import doubtRoutes from "./routes/doubt.routes.js";
 import notesRoutes from "./routes/notes.routes.js";
 import gamificationRoutes from "./routes/gamification.routes.js";
+import interviewRoutes from "./routes/interview.routes.js";
+import onePagerRoutes from "./routes/onePager.routes.js";
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/doubts", doubtRoutes);
 app.use("/api/v1/notes", notesRoutes);
 app.use("/api/v1/gamification", gamificationRoutes);
+app.use("/api/v1/interview", interviewRoutes);
+app.use("/api/v1/onepager", onePagerRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -31,12 +32,24 @@ const topics = ["Physics", "Chemistry", "Mathematics", "Biology", "History", "Ec
 const difficulties = ["Easy", "Medium", "Hard"];
 
 interface QuestionData {
+  id?: string;
   question: string;
   options: string[];
   correctAnswerIndex: number;
   hint1: string;
   hint2: string;
   solution: string;
+}
+
+interface PracticeApiQuestion {
+  _id?: string;
+  id?: string;
+  question?: string;
+  options?: string[];
+  correctAnswerIndex?: number;
+  hint1?: string;
+  hint2?: string;
+  solution?: string;
 }
 
 interface QuestionResult {
@@ -63,6 +76,23 @@ export default function Practice() {
   const [revealedHints, setRevealedHints] = useState<number>(0);
   const [results, setResults] = useState<QuestionResult[]>([]);
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
+  };
+
+  const normalizeQuestion = (item: PracticeApiQuestion): QuestionData => ({
+    id: item._id || item.id,
+    question: item.question || "Question unavailable",
+    options: Array.isArray(item.options) ? item.options : [],
+    correctAnswerIndex: Number(item.correctAnswerIndex ?? 0),
+    hint1: item.hint1 || "Use elimination and identify the core concept first.",
+    hint2: item.hint2 || "Re-check units/keywords before finalizing.",
+    solution: item.solution || "Review the concept summary for this topic to confirm your reasoning."
+  });
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (stage === "quiz" && !loading && questions.length > 0) {
@@ -82,29 +112,25 @@ export default function Practice() {
     setQuestions([]);
 
     try {
-      const res = await fetch("http://localhost:5000/api/generate-practice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: selectedTopic, difficulty: selectedDifficulty })
-      });
-      const data = await res.json();
+      const data = await apiRequest<PracticeApiQuestion | PracticeApiQuestion[]>(
+        "/api/v1/practice/generate",
+        {
+          method: "POST",
+          body: JSON.stringify({ topic: selectedTopic, difficulty: selectedDifficulty })
+        },
+        true
+      );
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to generate");
-      }
+      const normalized = (Array.isArray(data) ? data : [data]).map(normalizeQuestion);
 
-      if (Array.isArray(data)) {
-        setQuestions(data);
-      } else {
-        throw new Error("Invalid format received from AI.");
-      }
+      setQuestions(normalized);
 
       setTimeElapsed(0);
       setRevealedHints(0);
       setSelectedOption(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setErrorMsg(error.message);
+      setErrorMsg(getErrorMessage(error, "Failed to load questions."));
       setStage("select");
     } finally {
       setLoading(false);
@@ -121,27 +147,40 @@ export default function Practice() {
     if (selectedOption !== null) {
       const currQ = questions[currentQIndex];
       const usedHint = revealedHints > 0;
-      const isCorrect = selectedOption === currQ.correctAnswerIndex;
+      const processResult = (isCorrect: boolean) => {
+        const marks = (isCorrect && !usedHint) ? 4 : 0;
+        const res: QuestionResult = {
+          questionData: currQ,
+          selectedOption,
+          usedHint,
+          marksEarned: marks
+        };
 
-      // Scoring Logic: 4 marks if correct & no hints. 0 marks otherwise.
-      const marks = (isCorrect && !usedHint) ? 4 : 0;
+        setResults(prev => [...prev, res]);
 
-      const res: QuestionResult = {
-        questionData: currQ,
-        selectedOption,
-        usedHint,
-        marksEarned: marks
+        if (currentQIndex < questions.length - 1) {
+          setCurrentQIndex(prev => prev + 1);
+          setSelectedOption(null);
+          setRevealedHints(0);
+          setTimeElapsed(0);
+        } else {
+          setStage("evaluation");
+        }
       };
 
-      setResults(prev => [...prev, res]);
-
-      if (currentQIndex < questions.length - 1) {
-        setCurrentQIndex(prev => prev + 1);
-        setSelectedOption(null);
-        setRevealedHints(0);
-        setTimeElapsed(0);
+      if (currQ.id) {
+        apiRequest<{ isCorrect: boolean }>(
+          "/api/v1/practice/submit",
+          {
+            method: "POST",
+            body: JSON.stringify({ practiceId: currQ.id, selectedAnswerIndex: selectedOption })
+          },
+          true
+        )
+          .then((result) => processResult(Boolean(result.isCorrect)))
+          .catch(() => processResult(selectedOption === currQ.correctAnswerIndex));
       } else {
-        setStage("evaluation");
+        processResult(selectedOption === currQ.correctAnswerIndex);
       }
     }
   };

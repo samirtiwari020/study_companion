@@ -1,6 +1,5 @@
 import { verifyToken } from "../utils/token.js";
 import User from "../models/User.js";
-import { isDBConnected } from "../utils/mockData.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -12,17 +11,6 @@ export const protect = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-
-    if (!isDBConnected()) {
-      // Mock mode: set a mock user
-      req.user = {
-        _id: decoded.userId,
-        id: decoded.userId,
-        name: "Demo User",
-        email: "user@example.com"
-      };
-      return next();
-    }
 
     const user = await User.findById(decoded.userId).select("-password");
 

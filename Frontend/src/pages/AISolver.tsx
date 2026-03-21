@@ -16,6 +16,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -30,14 +31,6 @@ type Message = { id: number; role: "user" | "ai"; content: string; time: string;
 
 const getTime = () =>
   new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-
-const dummyResponses = [
-  `Great question! Let me break this down step by step:\n\n**Step 1: Identify the concept**\nThis relates to a fundamental principle. Let's start by understanding the core idea.\n\n**Step 2: Apply the formula**\nUsing the relevant equation, we substitute the given values.\n\n**Step 3: Calculate**\nAfter simplification, we arrive at the answer.\n\n💡 **Key takeaway:** Always identify what's given, what's asked, and which formula connects them.\n\nWould you like me to solve a similar problem for practice?`,
-
-  `Absolutely! Here's a clear explanation:\n\n**The Core Idea:**\nThink of it like this — the concept works because of the underlying principle of conservation.\n\n**Why it matters:**\n• It appears frequently in competitive exams\n• Understanding this unlocks related topics\n• It connects to real-world applications\n\n**Common Mistakes to Avoid:**\n1. Don't confuse the direction of the force\n2. Always check the units\n3. Draw a free body diagram first\n\nShall I quiz you on this topic? 🎯`,
-
-  `Let me explain this with an analogy:\n\n**Imagine you're on a bus 🚌**\nWhen the bus accelerates, you feel pushed backward. That's inertia!\n\n**The Math Behind It:**\n\`F = ma\`\n\nWhere:\n• F = Net force (in Newtons)\n• m = Mass (in kg)\n• a = Acceleration (in m/s²)\n\n**Example Problem:**\nA 5kg block accelerates at 2 m/s².\nF = 5 × 2 = **10 N**\n\nWant me to explain the next concept in this chapter? 📖`,
-];
 
 const initialMessages: Message[] = [
   {
@@ -59,7 +52,6 @@ export default function AISolver() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [responseIndex, setResponseIndex] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,25 +59,43 @@ export default function AISolver() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const sendMessage = (text?: string) => {
+  const sendMessage = async (text?: string) => {
     const msg = text || input.trim();
     if (!msg) return;
+
     const userMsg: Message = { id: Date.now(), role: "user", content: msg, time: getTime(), xpAwarded: true };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const data = await apiRequest<{ answer: string }>(
+        "/api/v1/doubts",
+        {
+          method: "POST",
+          body: JSON.stringify({ question: msg })
+        },
+        true
+      );
+
       const aiMsg: Message = {
         id: Date.now() + 1,
         role: "ai",
-        content: dummyResponses[responseIndex % dummyResponses.length],
+        content: data.answer || "No answer returned.",
         time: getTime(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-      setResponseIndex((i) => i + 1);
+    } catch (error) {
+      const aiMsg: Message = {
+        id: Date.now() + 1,
+        role: "ai",
+        content: error instanceof Error ? error.message : "Failed to solve doubt.",
+        time: getTime()
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1800);
+    }
   };
 
   const renderContent = (content: string) => {

@@ -3,12 +3,10 @@ import { env } from "./env.js";
 import { logger } from "../utils/logger.js";
 
 const MAX_RETRY_ATTEMPTS = 3;
-let retryCount = 0;
 
 export const connectDB = async () => {
   if (!env.MONGO_URI) {
-    logger.warn("MONGO_URI is missing. Running backend in mock mode (no persistent DB).");
-    return;
+    throw new Error("MONGO_URI is missing. Database connection is required.");
   }
 
   if (
@@ -17,27 +15,26 @@ export const connectDB = async () => {
     env.MONGO_URI.includes("<cluster>") ||
     env.MONGO_URI.includes("<database>")
   ) {
-    logger.warn("MONGO_URI is a template placeholder. Running backend in mock mode.");
-    return;
+    throw new Error("MONGO_URI is a template placeholder. Please provide a valid MongoDB URI.");
   }
 
-  try {
-    await mongoose.connect(env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
-      retryWrites: true
-    });
-    logger.info("✅ MongoDB connected successfully");
-    retryCount = 0;
-  } catch (error) {
-    retryCount++;
-    if (retryCount < MAX_RETRY_ATTEMPTS) {
-      logger.warn(`[Attempt ${retryCount}/${MAX_RETRY_ATTEMPTS}] MongoDB connection failed. Retrying...`);
-      setTimeout(() => connectDB(), 3000);
-    } else {
-      logger.warn(`MongoDB connection failed after ${MAX_RETRY_ATTEMPTS} attempts. Running in mock/memory mode.`);
-      logger.warn(`Reason: ${error.message}`);
-      logger.info("💡 Tip: Update MONGO_URI in .env with valid MongoDB Atlas credentials to enable persistence.");
+  for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+    try {
+      await mongoose.connect(env.MONGO_URI, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+        retryWrites: true
+      });
+      logger.info("✅ MongoDB connected successfully");
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt < MAX_RETRY_ATTEMPTS) {
+        logger.warn(`[Attempt ${attempt}/${MAX_RETRY_ATTEMPTS}] MongoDB connection failed. Retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      } else {
+        throw new Error(`MongoDB connection failed after ${MAX_RETRY_ATTEMPTS} attempts: ${message}`);
+      }
     }
   }
 };
