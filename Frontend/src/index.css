@@ -8,119 +8,122 @@
   :root {
     --font-sans: 'Inter', system-ui, sans-serif;
 
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Dark Gamified Theme - Primary Colors */
+    --background: 223 49% 8%;
+    --foreground: 213 27% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card: 220 32% 15%;
+    --card-foreground: 213 27% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover: 220 32% 15%;
+    --popover-foreground: 213 27% 98%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 188 94% 43%;
+    --primary-foreground: 213 27% 98%;
 
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 215 25% 15%;
+    --secondary: 221 39% 11%;
+    --secondary-foreground: 213 27% 98%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 221 39% 11%;
+    --muted-foreground: 217 33% 65%;
 
-    --accent: 187 92% 41%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 213 27% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 213 27% 98%;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 213 27% 98%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 93% 50%;
+    --warning-foreground: 213 27% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 239 84% 67%;
+    --border: 220 29% 20%;
+    --input: 220 29% 20%;
+    --ring: 188 94% 43%;
 
     --radius: 0.75rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(239 84% 67%), hsl(271 81% 56%));
-    --gradient-primary-hover: linear-gradient(135deg, hsl(239 84% 60%), hsl(271 81% 50%));
-    --gradient-secondary: linear-gradient(135deg, hsl(187 92% 41%), hsl(199 89% 48%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 53%));
-    --gradient-success: linear-gradient(135deg, hsl(160 84% 39%), hsl(152 69% 45%));
+    /* Gamified Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(188 94% 43%), hsl(142 71% 45%));
+    --gradient-primary-hover: linear-gradient(135deg, hsl(188 94% 50%), hsl(142 71% 52%));
+    --gradient-secondary: linear-gradient(135deg, hsl(188 94% 43%), hsl(199 89% 48%));
+    --gradient-warm: linear-gradient(135deg, hsl(78 81% 55%), hsl(45 93% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 35%));
 
-    --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.05);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
-    --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
-    --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 60px rgba(99, 102, 241, 0.05);
+    --shadow-glass: 0 4px 30px rgba(6, 182, 212, 0.08);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(6, 182, 212, 0.05);
+    --shadow-card-hover: 0 8px 25px rgba(6, 182, 212, 0.15), 0 4px 10px rgba(0, 0, 0, 0.2);
+    --shadow-elevated: 0 12px 40px rgba(6, 182, 212, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.25), 0 0 60px rgba(6, 182, 212, 0.1);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 215 25% 15%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-background: 223 49% 8%;
+    --sidebar-foreground: 213 27% 98%;
+    --sidebar-primary: 188 94% 43%;
+    --sidebar-primary-foreground: 223 49% 8%;
+    --sidebar-accent: 220 32% 15%;
+    --sidebar-accent-foreground: 213 27% 98%;
+    --sidebar-border: 220 29% 20%;
+    --sidebar-ring: 188 94% 43%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 223 49% 8%;
+    --foreground: 213 27% 98%;
 
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 32% 15%;
+    --card-foreground: 213 27% 98%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 32% 15%;
+    --popover-foreground: 213 27% 98%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 188 94% 43%;
+    --primary-foreground: 213 27% 98%;
 
-    --secondary: 217 33% 22%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 221 39% 11%;
+    --secondary-foreground: 213 27% 98%;
 
-    --muted: 217 33% 22%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 221 39% 11%;
+    --muted-foreground: 217 33% 65%;
 
-    --accent: 187 92% 41%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 213 27% 98%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 213 27% 98%;
 
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 213 27% 98%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 45 93% 50%;
+    --warning-foreground: 213 27% 98%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 239 84% 67%;
+    --border: 220 29% 20%;
+    --input: 220 29% 20%;
+    --ring: 188 94% 43%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(239 84% 67%), hsl(271 81% 56%));
-    --gradient-primary-hover: linear-gradient(135deg, hsl(239 84% 72%), hsl(271 81% 62%));
-    --gradient-secondary: linear-gradient(135deg, hsl(187 92% 41%), hsl(199 89% 48%));
-    --gradient-warm: linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 53%));
-    --gradient-success: linear-gradient(135deg, hsl(160 84% 39%), hsl(152 69% 45%));
+    /* Gamified Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(188 94% 43%), hsl(142 71% 45%));
+    --gradient-primary-hover: linear-gradient(135deg, hsl(188 94% 50%), hsl(142 71% 52%));
+    --gradient-secondary: linear-gradient(135deg, hsl(188 94% 43%), hsl(199 89% 48%));
+    --gradient-warm: linear-gradient(135deg, hsl(78 81% 55%), hsl(45 93% 50%));
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 35%));
 
-    --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.2);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
-    --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.2);
-    --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.25), 0 0 60px rgba(99, 102, 241, 0.1);
+    --shadow-glass: 0 4px 30px rgba(6, 182, 212, 0.1);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(6, 182, 212, 0.08);
+    --shadow-card-hover: 0 8px 25px rgba(6, 182, 212, 0.2), 0 4px 10px rgba(0, 0, 0, 0.25);
+    --shadow-elevated: 0 12px 40px rgba(6, 182, 212, 0.25), 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 60px rgba(6, 182, 212, 0.15);
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-background: 223 49% 8%;
+    --sidebar-foreground: 213 27% 98%;
+    --sidebar-primary: 188 94% 43%;
+    --sidebar-primary-foreground: 223 49% 8%;
+    --sidebar-accent: 220 32% 15%;
+    --sidebar-accent-foreground: 213 27% 98%;
+    --sidebar-border: 220 29% 20%;
+    --sidebar-ring: 188 94% 43%;
   }
 }
 
@@ -251,11 +254,11 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.2);
+    background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.35);
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 
   /* ── Dot grid background pattern ── */

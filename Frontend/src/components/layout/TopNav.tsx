@@ -18,15 +18,15 @@ export function TopNav() {
 
       <div className="flex items-center gap-1.5">
         {/* Streak badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 mr-0.5 transition-all duration-200 hover:bg-orange-500/15 hover:scale-105 cursor-default group">
-          <Flame className="h-3.5 w-3.5 text-orange-500 group-hover:animate-bounce-gentle" />
-          <span className="text-xs font-bold text-orange-500">12</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 mr-0.5 transition-all duration-200 hover:bg-green-500/15 hover:scale-105 cursor-default group">
+          <Flame className="h-3.5 w-3.5 text-green-500 group-hover:animate-bounce-gentle" />
+          <span className="text-xs font-bold text-green-500">12</span>
         </div>
 
         {/* XP badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mr-0.5 transition-all duration-200 hover:bg-amber-500/15 hover:scale-105 cursor-default group">
-          <Zap className="h-3.5 w-3.5 text-amber-500 group-hover:animate-bounce-gentle" />
-          <span className="text-xs font-bold text-amber-500">2,450</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-lime-500/10 border border-lime-500/20 mr-0.5 transition-all duration-200 hover:bg-lime-500/15 hover:scale-105 cursor-default group">
+          <Zap className="h-3.5 w-3.5 text-lime-500 group-hover:animate-bounce-gentle" />
+          <span className="text-xs font-bold text-lime-500">2,450</span>
         </div>
 
         {/* Notification */}

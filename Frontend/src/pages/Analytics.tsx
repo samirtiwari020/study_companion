@@ -1,326 +1,660 @@
 import { motion, type Variants } from "framer-motion";
-import { BarChart3, Clock, Target, TrendingUp, AlertTriangle, BookOpen } from "lucide-react";
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
+  Activity,
+  Award,
+  Brain,
+  Clock3,
+  Flame,
+  Gem,
+  GraduationCap,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Timer,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+  Zap,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
+import CalendarHeatmap from "react-calendar-heatmap";
+import "react-calendar-heatmap/dist/styles.css";
+import { useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { format, subDays } from "date-fns";
 
-const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
-const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
+type Trend = "up" | "down";
 
-const overviewStats = [
-  { label: "Overall Accuracy", value: "78%", icon: Target, change: "+5% this week", color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
-  { label: "Time Spent", value: "24.5h", icon: Clock, change: "+3.2h this week", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-  { label: "Questions Solved", value: "342", icon: BarChart3, change: "+48 this week", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-  { label: "Improvement", value: "+12%", icon: TrendingUp, change: "vs last month", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-];
-
-/* Accuracy trend data */
-const accuracyData = [
-  { day: "Mar 6", accuracy: 60 },
-  { day: "Mar 7", accuracy: 55 },
-  { day: "Mar 8", accuracy: 62 },
-  { day: "Mar 9", accuracy: 58 },
-  { day: "Mar 10", accuracy: 65 },
-  { day: "Mar 11", accuracy: 70 },
-  { day: "Mar 12", accuracy: 68 },
-  { day: "Mar 13", accuracy: 72 },
-  { day: "Mar 14", accuracy: 75 },
-  { day: "Mar 15", accuracy: 73 },
-  { day: "Mar 16", accuracy: 78 },
-  { day: "Mar 17", accuracy: 80 },
-  { day: "Mar 18", accuracy: 82 },
-  { day: "Mar 19", accuracy: 78 },
-];
-
-/* Subject-wise bar data */
-const subjectData = [
-  { subject: "Physics", score: 82, questions: 95 },
-  { subject: "Chemistry", score: 65, questions: 78 },
-  { subject: "Maths", score: 88, questions: 110 },
-  { subject: "Biology", score: 52, questions: 59 },
-];
-
-/* Radar data */
-const radarData = [
-  { skill: "Mechanics", value: 92 },
-  { skill: "Thermo", value: 78 },
-  { skill: "Organic", value: 55 },
-  { skill: "Calculus", value: 88 },
-  { skill: "Optics", value: 42 },
-  { skill: "Algebra", value: 95 },
-];
-
-/* Topics breakdown */
-const topics = [
-  { name: "Mechanics", accuracy: 92, status: "strong" as const, questions: 45 },
-  { name: "Algebra", accuracy: 95, status: "strong" as const, questions: 38 },
-  { name: "Calculus", accuracy: 88, status: "strong" as const, questions: 32 },
-  { name: "Thermodynamics", accuracy: 78, status: "strong" as const, questions: 28 },
-  { name: "Inorganic Chemistry", accuracy: 65, status: "average" as const, questions: 22 },
-  { name: "Organic Chemistry", accuracy: 55, status: "average" as const, questions: 25 },
-  { name: "Optics", accuracy: 42, status: "weak" as const, questions: 18 },
-  { name: "Genetics", accuracy: 35, status: "weak" as const, questions: 15 },
-];
-
-const statusColor = { strong: "bg-emerald-500", average: "bg-amber-500", weak: "bg-red-500" };
-const statusBadge = {
-  strong: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-  average: "text-amber-500 bg-amber-500/10 border-amber-500/20",
-  weak: "text-red-500 bg-red-500/10 border-red-500/20",
+type MetricCardProps = {
+  title: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+  trend: Trend;
+  trendText: string;
+  tone: string;
 };
 
-const weakAreas = topics.filter((t) => t.status === "weak" || t.status === "average");
+type ChartCardProps = {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+};
 
-export default function Analytics() {
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+};
+
+const stagger: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0 } },
+};
+
+const weeklyPerformance = [
+  { date: "Mar 01", score: 66 },
+  { date: "Mar 03", score: 70 },
+  { date: "Mar 05", score: 68 },
+  { date: "Mar 07", score: 74 },
+  { date: "Mar 09", score: 77 },
+  { date: "Mar 11", score: 81 },
+  { date: "Mar 13", score: 79 },
+  { date: "Mar 15", score: 83 },
+  { date: "Mar 17", score: 86 },
+  { date: "Mar 19", score: 89 },
+];
+
+const subjectPerformance = [
+  { subject: "Physics", accuracy: 84 },
+  { subject: "Chemistry", accuracy: 71 },
+  { subject: "Math", accuracy: 91 },
+];
+
+const timeDistribution = [
+  { name: "Practice", value: 52, color: "#06b6d4" },
+  { name: "Revision", value: 30, color: "#84cc16" },
+  { name: "Tests", value: 18, color: "#22c55e" },
+];
+
+const metricCards: MetricCardProps[] = [
+  {
+    title: "Total Questions Solved",
+    value: "1,284",
+    icon: Target,
+    trend: "up",
+    trendText: "+13% this month",
+    tone: "from-cyan-500/20 to-cyan-500/5 border-cyan-500/35",
+  },
+  {
+    title: "Accuracy",
+    value: "87.4%",
+    icon: ShieldCheck,
+    trend: "up",
+    trendText: "+2.1% this week",
+    tone: "from-lime-500/20 to-lime-500/5 border-lime-500/35",
+  },
+  {
+    title: "Tests Attempted",
+    value: "42",
+    icon: GraduationCap,
+    trend: "up",
+    trendText: "+4 this week",
+    tone: "from-emerald-500/20 to-emerald-500/5 border-emerald-500/35",
+  },
+  {
+    title: "Study Time (Hours)",
+    value: "168h",
+    icon: Clock3,
+    trend: "up",
+    trendText: "+9h this week",
+    tone: "from-cyan-500/20 to-lime-500/5 border-cyan-500/35",
+  },
+  {
+    title: "Current Streak",
+    value: "18 days",
+    icon: Flame,
+    trend: "down",
+    trendText: "-1 day from peak",
+    tone: "from-orange-500/20 to-red-500/5 border-orange-500/35",
+  },
+  {
+    title: "Avg Test Score",
+    value: "88/100",
+    icon: Trophy,
+    trend: "up",
+    trendText: "+6 points",
+    tone: "from-fuchsia-500/20 to-cyan-500/5 border-fuchsia-500/35",
+  },
+];
+
+const insights = [
+  "You are strong in Mathematics with consistent 90%+ outcomes.",
+  "Focus more on Organic Chemistry to unlock faster score gains.",
+  "Your accuracy dipped in the last 7 days after long sessions.",
+  "Short revision sprints before tests can improve retention by 12%.",
+];
+
+function MetricCard({ title, value, icon: Icon, trend, trendText, tone }: MetricCardProps) {
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 max-w-5xl mx-auto">
-      {/* Header with Level Progress */}
-      <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/30 glow-primary z-10 relative">
-              <BarChart3 className="h-7 w-7 text-white" />
-            </div>
-            {/* Decorative ring */}
-            <div className="absolute inset-[-4px] rounded-2xl border-2 border-primary/30 rotate-12" />
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ y: -4, scale: 1.01 }}
+      className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br p-4 transition-all duration-300 ${tone}`}
+    >
+      <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/10 opacity-20 blur-2xl transition-opacity group-hover:opacity-40" />
+      <div className="relative z-10 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+          <div className="rounded-lg bg-black/20 p-2">
+            <Icon className="h-4 w-4 text-cyan-200" />
           </div>
-          <div>
-            <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
-              Performance Stats <Target className="h-5 w-5 text-amber-500" />
-            </h1>
-            <p className="text-sm text-muted-foreground font-medium mt-1 text-primary">Track your skills and level up!</p>
+        </div>
+        <p className="text-2xl font-black">{value}</p>
+        <div className="flex items-center gap-1 text-xs font-semibold">
+          {trend === "up" ? (
+            <TrendingUp className="h-3.5 w-3.5 text-lime-400" />
+          ) : (
+            <TrendingDown className="h-3.5 w-3.5 text-orange-400" />
+          )}
+          <span className={trend === "up" ? "text-lime-300" : "text-orange-300"}>{trendText}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function ChartCard({ title, subtitle, children }: ChartCardProps) {
+  return (
+    <motion.div variants={fadeUp} className="glass-card rounded-2xl border border-border/50 p-5">
+      <div className="mb-4">
+        <h3 className="text-sm font-bold tracking-wide">{title}</h3>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+      {children}
+    </motion.div>
+  );
+}
+
+type HeatmapCardProps = {
+  values: { date: string; count: number }[];
+  selectedRange: "90d" | "180d" | "365d";
+  onRangeChange: (range: "90d" | "180d" | "365d") => void;
+  totalSubmissions: number;
+  activeDays: number;
+  maxStreak: number;
+};
+
+function HeatmapCard({
+  values,
+  selectedRange,
+  onRangeChange,
+  totalSubmissions,
+  activeDays,
+  maxStreak,
+}: HeatmapCardProps) {
+  return (
+    <motion.div variants={fadeUp} className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f1319] p-5 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-6">
+          <p className="text-[28px] font-black leading-none text-white sm:text-[36px]">{totalSubmissions}</p>
+          <p className="text-base text-slate-300">submissions in the past year</p>
+          <div className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+            <span>
+              Total active days: <span className="font-semibold text-white">{activeDays}</span>
+            </span>
+            <span>
+              Max streak: <span className="font-semibold text-white">{maxStreak}</span>
+            </span>
           </div>
         </div>
 
-        {/* Level Banner */}
-        <div className="bg-background/50 border border-primary/20 backdrop-blur-md rounded-2xl p-4 flex items-center gap-5 shadow-sm inset-shadow-sm min-w-[280px]">
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-sm font-bold">Level 5</span>
-              <span className="text-xs font-bold text-amber-500">2400 / 3000 XP</span>
-            </div>
-            <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: "80%" }}
-                transition={{ duration: 1.5, delay: 0.2, type: "spring" }}
-              />
-            </div>
-            <p className="text-[10px] text-muted-foreground font-medium mt-1.5">+600 XP to Level 6</p>
-          </div>
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-            <span className="text-amber-500 font-black text-lg">5</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Stats row */}
-      <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {overviewStats.map((stat) => (
-          <div key={stat.label} className={`glass-card rounded-2xl p-5 border-2 ${stat.border} hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group`}>
-            {/* Hover glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            <div className="flex items-center gap-3 mb-3 relative z-10">
-              <div className={`${stat.bg} p-2.5 rounded-xl shadow-inner`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-              <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">{stat.label}</span>
-            </div>
-            <p className="text-3xl font-black relative z-10">{stat.value}</p>
-            <div className="flex items-center gap-1 mt-2 relative z-10">
-              <TrendingUp className="h-3 w-3 text-emerald-500" />
-              <p className="text-xs text-emerald-500 font-bold">{stat.change}</p>
-            </div>
-          </div>
-        ))}
-      </motion.div>
-
-      {/* Charts row */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Accuracy trend — 2 cols */}
-        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5 lg:col-span-2">
-          <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" /> Accuracy Trend
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-4">Last 14 days</p>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={accuracyData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="accuracyGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[40, 100]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: number) => [`${value}%`, "Accuracy"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="accuracy"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#accuracyGrad)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        {/* Radar chart */}
-        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5">
-          <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" /> Skill Radar
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-2">Topic strengths</p>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="75%">
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis dataKey="skill" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-                <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
-                <Radar
-                  name="Score"
-                  dataKey="value"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.2}
-                  strokeWidth={2}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Subject performance bar chart + Weak areas */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Subject bar chart */}
-        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5">
-          <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-primary" /> Subject Performance
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-4">Average accuracy by subject</p>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={subjectData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis dataKey="subject" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: number, name: string) => [
-                    name === "score" ? `${value}%` : value,
-                    name === "score" ? "Accuracy" : "Questions"
-                  ]}
-                />
-                <Bar dataKey="score" radius={[6, 6, 0, 0]} fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        {/* Weak areas */}
-        <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5">
-          <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" /> Weak Areas
-          </h3>
-          <p className="text-[10px] text-muted-foreground mb-4">Topics that need more attention</p>
-          <div className="space-y-3">
-            {weakAreas.map((t) => (
-              <div key={t.name} className={`p-3.5 rounded-xl border ${statusBadge[t.status].split(" ").slice(1).join(" ")}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold">{t.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{t.questions} Qs</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize ${statusBadge[t.status]}`}>
-                      {t.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${statusColor[t.status]}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${t.accuracy}%` }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-[10px] text-muted-foreground">Accuracy</span>
-                  <span className={`text-xs font-bold ${t.status === "weak" ? "text-red-500" : "text-amber-500"}`}>{t.accuracy}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Topic breakdown table */}
-      <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5">
-        <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-primary" /> All Topics Breakdown
-        </h3>
-        <div className="space-y-3">
-          {topics.map((t) => (
-            <div key={t.name} className="space-y-1.5 p-3 rounded-xl bg-muted/20 md:p-0 md:bg-transparent md:rounded-none md:space-y-0 md:flex md:items-center md:gap-4">
-              <div className="flex items-center justify-between md:w-44 md:block">
-                <span className="text-sm font-medium truncate">{t.name}</span>
-                <div className="flex items-center gap-2 md:hidden">
-                  <span className="text-xs text-muted-foreground">{t.questions} Qs</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize ${statusBadge[t.status]}`}>
-                    {t.status}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 md:flex-1 md:gap-4">
-                <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${statusColor[t.status]}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${t.accuracy}%` }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                  />
-                </div>
-                <span className="text-sm font-bold w-10 text-right">{t.accuracy}%</span>
-              </div>
-              <span className="hidden md:inline-block text-xs text-muted-foreground w-12 text-right">{t.questions} Qs</span>
-              <span className={`hidden md:inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize w-16 text-center ${statusBadge[t.status]}`}>
-                {t.status}
-              </span>
-            </div>
+        <div className="inline-flex items-center rounded-lg border border-white/10 bg-[#1f242d] p-1 text-xs font-semibold">
+          {(["90d", "180d", "365d"] as const).map((range) => (
+            <button
+              key={range}
+              onClick={() => onRangeChange(range)}
+              className={`rounded-md px-3 py-1.5 transition-all ${
+                selectedRange === range ? "bg-[#2b313c] text-white" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {range}
+            </button>
           ))}
         </div>
-      </motion.div>
+      </div>
+
+      <div className="overflow-x-auto pb-1">
+        <div className="min-w-[1000px]">
+          <CalendarHeatmap
+            startDate={subDays(new Date(), 365)}
+            endDate={new Date()}
+            values={values}
+            classForValue={(v) => {
+              if (!v || v.count === 0) return "heatmap-empty";
+              if (v.count <= 3) return "heatmap-low";
+              if (v.count <= 7) return "heatmap-medium";
+              return "heatmap-high";
+            }}
+            showWeekdayLabels={false}
+            titleForValue={(v) => {
+              if (!v) return "No activity";
+              return `${v.date}: ${v.count} submissions`;
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 text-[11px] text-slate-400">
+        <span>Less</span>
+        <span className="h-3 w-3 rounded-[2px] bg-[#232a34]" />
+        <span className="h-3 w-3 rounded-[2px] bg-[#0e4429]" />
+        <span className="h-3 w-3 rounded-[2px] bg-[#006d32]" />
+        <span className="h-3 w-3 rounded-[2px] bg-[#26a641]" />
+        <span className="h-3 w-3 rounded-[2px] bg-[#39d353]" />
+        <span>More</span>
+      </div>
     </motion.div>
+  );
+}
+
+export default function Analytics() {
+  const [selectedRange, setSelectedRange] = useState<"90d" | "180d" | "365d">("365d");
+
+  const xpCurrent = 2780;
+  const xpTarget = 3500;
+  const level = 4;
+  const streakDays = 18;
+  const xpPercent = Math.round((xpCurrent / xpTarget) * 100);
+
+  const heatmapValues = useMemo(() => {
+    // Always generate 365 days, but only populate data for selected range
+    const rangeLimit = selectedRange === "90d" ? 90 : selectedRange === "180d" ? 180 : 365;
+    
+    return Array.from({ length: 365 }).map((_, idx) => {
+      const d = subDays(new Date(), 365 - idx);
+      const daysFromNow = 365 - idx;
+      
+      // Only populate data for days within the selected range
+      if (daysFromNow <= rangeLimit) {
+        const seed = d.getDate() + d.getMonth() * 3 + idx;
+        const count = seed % 8 === 0 ? 0 : (seed % 9) + (seed % 4);
+        return { date: format(d, "yyyy-MM-dd"), count };
+      }
+      
+      // Empty cells for days outside the range
+      return { date: format(d, "yyyy-MM-dd"), count: 0 };
+    });
+  }, [selectedRange]);
+
+  const heatmapStats = useMemo(() => {
+    let active = 0;
+    let total = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
+
+    heatmapValues.forEach((item) => {
+      total += item.count;
+      if (item.count > 0) {
+        active += 1;
+        currentStreak += 1;
+        if (currentStreak > bestStreak) bestStreak = currentStreak;
+      } else {
+        currentStreak = 0;
+      }
+    });
+
+    return {
+      activeDays: active,
+      totalSubmissions: total,
+      maxStreak: bestStreak,
+    };
+  }, [heatmapValues]);
+
+  return (
+    <>
+      <style>{`
+        .react-calendar-heatmap text {
+          fill: hsl(var(--muted-foreground));
+          font-size: 10px;
+        }
+        .react-calendar-heatmap svg {
+          overflow: visible;
+        }
+        .react-calendar-heatmap g g {
+          margin-right: 8px;
+        }
+        .react-calendar-heatmap g g rect {
+          rx: 2.5;
+          ry: 2.5;
+        }
+        .react-calendar-heatmap .color-empty,
+        .react-calendar-heatmap .heatmap-empty {
+          fill: #232a34;
+          stroke: rgba(255, 255, 255, 0.04);
+          rx: 2.5;
+          ry: 2.5;
+        }
+        .react-calendar-heatmap .heatmap-low {
+          fill: #0e4429;
+          rx: 2.5;
+          ry: 2.5;
+        }
+        .react-calendar-heatmap .heatmap-medium {
+          fill: #006d32;
+          rx: 2.5;
+          ry: 2.5;
+        }
+        .react-calendar-heatmap .heatmap-high {
+          fill: #39d353;
+          rx: 2.5;
+          ry: 2.5;
+        }
+        .react-calendar-heatmap rect:hover {
+          stroke: rgba(255, 255, 255, 0.35);
+          stroke-width: 1px;
+        }
+        .react-calendar-heatmap .react-calendar-heatmap-month-label {
+          fill: #94a3b8;
+          font-size: 9px;
+          font-weight: 500;
+        }
+        .react-calendar-heatmap .react-calendar-heatmap-weekday-label {
+          fill: #94a3b8;
+          font-size: 8px;
+        }
+      `}</style>
+
+      <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 pb-10">
+        <motion.div
+          variants={fadeUp}
+          className="relative overflow-hidden rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/15 via-lime-500/5 to-transparent p-6 md:p-8"
+        >
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gradient-to-br from-cyan-500 to-lime-500 opacity-10 blur-3xl" />
+          <div className="absolute -left-20 -bottom-20 h-56 w-56 rounded-full bg-cyan-500 opacity-5 blur-3xl" />
+
+          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.8fr_1fr] lg:items-center">
+            <div className="space-y-4">
+              <h1 className="text-3xl font-black md:text-4xl">Your Progress Dashboard 🚀</h1>
+              <p className="max-w-2xl text-sm text-foreground/75 md:text-base">
+                Track your momentum, review smart insights, and keep your streak alive. Your learning journey now feels like a game.
+              </p>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-cyan-300">XP Points</p>
+                  <p className="text-xl font-black">{xpCurrent}</p>
+                </div>
+                <div className="rounded-2xl border border-lime-500/30 bg-lime-500/10 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-lime-300">Current Level</p>
+                  <p className="text-xl font-black">Level {level}</p>
+                </div>
+                <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-orange-300">Daily Streak 🔥</p>
+                  <p className="text-xl font-black">{streakDays} Days</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                  <span>XP Progress to Level {level + 1}</span>
+                  <span>{xpCurrent} / {xpTarget} XP</span>
+                </div>
+                <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${xpPercent}%` }}
+                    transition={{ duration: 1.2, delay: 0.2 }}
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-lime-500 to-emerald-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-3xl border border-cyan-500/30 p-5">
+              <div className="mb-4 flex items-center gap-2 text-cyan-300">
+                <Gem className="h-4 w-4" />
+                <p className="text-xs font-bold uppercase tracking-widest">Gamified Rank</p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-xl border border-border/40 bg-background/40 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">League</span>
+                  <span className="font-bold text-lime-300">Platinum</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/40 bg-background/40 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">Global Rank</span>
+                  <span className="font-bold">#124</span>
+                </div>
+                <div className="flex items-center justify-between rounded-xl border border-border/40 bg-background/40 px-3 py-2 text-sm">
+                  <span className="text-muted-foreground">Weekly XP Gain</span>
+                  <span className="font-bold text-cyan-300">+420 XP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <HeatmapCard
+          values={heatmapValues}
+          selectedRange={selectedRange}
+          onRangeChange={setSelectedRange}
+          totalSubmissions={heatmapStats.totalSubmissions}
+          activeDays={heatmapStats.activeDays}
+          maxStreak={heatmapStats.maxStreak}
+        />
+
+        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          {metricCards.map((card) => (
+            <MetricCard key={card.title} {...card} />
+          ))}
+        </motion.div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-7">
+            <ChartCard title="Performance Over Time" subtitle="Accuracy trend with smooth progression">
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weeklyPerformance}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.45} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis domain={[50, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                      }}
+                      formatter={(v: number) => [`${v}%`, "Accuracy"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#06b6d4"
+                      strokeWidth={3}
+                      dot={{ r: 3, fill: "#84cc16" }}
+                      activeDot={{ r: 6, fill: "#22c55e" }}
+                      isAnimationActive
+                      animationDuration={1200}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+
+          <div className="xl:col-span-5">
+            <ChartCard title="Subject-wise Performance" subtitle="Animated bars by core subjects">
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={subjectPerformance}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.45} />
+                    <XAxis dataKey="subject" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                      }}
+                      formatter={(v: number) => [`${v}%`, "Accuracy"]}
+                    />
+                    <Bar dataKey="accuracy" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={1100}>
+                      <Cell fill="#06b6d4" />
+                      <Cell fill="#84cc16" />
+                      <Cell fill="#22c55e" />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-5">
+            <ChartCard title="Time Distribution" subtitle="Practice vs Revision vs Tests">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                      }}
+                      formatter={(v: number) => [`${v}%`, "Time"]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Pie
+                      data={timeDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={62}
+                      outerRadius={90}
+                      dataKey="value"
+                      isAnimationActive
+                      animationDuration={1000}
+                    >
+                      {timeDistribution.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+
+          <div className="xl:col-span-7">
+            <motion.div variants={fadeUp} className="glass-card rounded-2xl border border-border/50 p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-bold tracking-wide">Smart Insights 💡</h3>
+                <div className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
+                  AI Coach Mode
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {insights.map((insight, idx) => (
+                  <motion.div
+                    key={insight}
+                    initial={{ opacity: 0, y: 14 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.08 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -2 }}
+                    className="rounded-xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-lime-500/5 p-4"
+                  >
+                    <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-black/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-lime-300">
+                      <Brain className="h-3 w-3" /> Insight {idx + 1}
+                    </div>
+                    <p className="text-sm leading-relaxed text-foreground/85">{insight}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-12">
+          <motion.div variants={fadeUp} className="xl:col-span-12">
+            <div className="glass-card h-full rounded-2xl border border-lime-500/25 p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-sm font-bold tracking-wide">Gamification Hub 🎮</h3>
+                <div className="rounded-lg bg-lime-500/20 p-1.5">
+                  <Award className="h-4 w-4 text-lime-300" />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border/40 bg-background/50 p-3">
+                  <div className="mb-2 flex items-center justify-between text-xs">
+                    <span className="font-semibold text-muted-foreground">XP Track</span>
+                    <span className="font-bold text-cyan-300">{xpPercent}%</span>
+                  </div>
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${xpPercent}%` }}
+                      transition={{ duration: 1, delay: 0.2 }}
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-lime-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-center">
+                  <p className="text-[11px] uppercase tracking-widest text-cyan-300">Level Badge</p>
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-cyan-500/35 bg-black/20 px-4 py-1.5">
+                    <Zap className="h-4 w-4 text-cyan-300" />
+                    <span className="text-sm font-black">Level {level}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Achievements</p>
+                  {[
+                    { label: "5 Day Streak", icon: Flame, tone: "text-orange-300 border-orange-500/30 bg-orange-500/10" },
+                    { label: "50 Questions Solved", icon: Target, tone: "text-lime-300 border-lime-500/30 bg-lime-500/10" },
+                    { label: "3 Perfect Tests", icon: Trophy, tone: "text-cyan-300 border-cyan-500/30 bg-cyan-500/10" },
+                    { label: "2h Focus Sprint", icon: Timer, tone: "text-emerald-300 border-emerald-500/30 bg-emerald-500/10" },
+                  ].map((badge) => (
+                    <motion.div
+                      key={badge.label}
+                      whileHover={{ x: 4 }}
+                      className={`flex items-center gap-2 rounded-lg border p-2.5 text-sm font-semibold ${badge.tone}`}
+                    >
+                      <badge.icon className="h-4 w-4" />
+                      {badge.label}
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="rounded-xl border border-fuchsia-500/25 bg-fuchsia-500/10 p-3 text-xs text-fuchsia-200">
+                  <div className="flex items-center gap-1 font-semibold">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Bonus Mission
+                  </div>
+                  <p className="mt-1 leading-relaxed">Score 90%+ in 2 mock tests this week to unlock 250 XP bonus.</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    </>
   );
 }

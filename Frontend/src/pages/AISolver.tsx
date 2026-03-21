@@ -1,9 +1,30 @@
 import { motion, type Variants, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles, MessageCircleQuestion, BookOpen, Atom, Calculator, Lightbulb } from "lucide-react";
+import {
+  Send,
+  Bot,
+  User,
+  Sparkles,
+  MessageCircleQuestion,
+  BookOpen,
+  Atom,
+  Calculator,
+  Lightbulb,
+  Zap,
+  Brain,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const fadeUp: Variants = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+};
+const stagger: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0 } },
+};
 
 type Message = { id: number; role: "user" | "ai"; content: string; time: string; xpAwarded?: boolean };
 
@@ -73,18 +94,18 @@ export default function AISolver() {
       const parts = line.split(/(`[^`]+`)/).map((part, j) => {
         if (part.startsWith("`") && part.endsWith("`")) {
           return (
-            <code key={j} className="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-xs font-mono font-bold">
+            <code key={j} className="px-2 py-1 rounded bg-cyan-500/20 text-cyan-300 text-xs font-mono font-bold border border-cyan-500/30">
               {part.slice(1, -1)}
             </code>
           );
         }
         // Handle bold
         return part.split("**").map((seg, k) =>
-          k % 2 === 1 ? <strong key={`${j}-${k}`} className="text-foreground">{seg}</strong> : seg
+          k % 2 === 1 ? <strong key={`${j}-${k}`} className="font-bold text-cyan-50">{seg}</strong> : seg
         );
       });
       return (
-        <p key={i} className={i > 0 ? "mt-1.5" : ""}>
+        <p key={i} className={i > 0 ? "mt-2" : ""}>
           {parts}
         </p>
       );
@@ -97,83 +118,70 @@ export default function AISolver() {
     <motion.div
       initial="hidden"
       animate="show"
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } } as Variants}
-      className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto"
+      variants={stagger}
+      className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto"
     >
-      {/* Header */}
-      <motion.div variants={fadeUp} className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/30 glow-primary">
-            <Bot className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              Doubt Solver <Sparkles className="h-4 w-4 text-amber-500" />
-            </h1>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium mt-0.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-              AI Tutor Online
-            </p>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-primary">+15 XP per doubt</span>
-        </div>
-      </motion.div>
 
-      {/* Chat area */}
-      <motion.div variants={fadeUp} className="glass-card flex-1 flex flex-col overflow-hidden rounded-3xl border border-primary/10 shadow-xl shadow-black/5">
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+      {/* Chat Container */}
+      <motion.div
+        variants={fadeUp}
+        className="glass-card flex-1 flex flex-col overflow-hidden rounded-3xl border border-cyan-500/30 shadow-xl shadow-black/10"
+      >
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style]:none [overflow-y-property]:scroll">
           <AnimatePresence initial={false}>
-            {messages.map((msg) => (
+            {messages.map((msg, idx) => (
               <motion.div
                 key={msg.id}
-                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.4, type: "spring", bounce: 0.4 }}
-                className={`flex gap-3 relative ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
               >
-                {/* Floating XP Animation for User */}
+                {/* XP Animation */}
                 {msg.xpAwarded && (
                   <motion.div
-                    initial={{ opacity: 0, y: 0, scale: 0.5 }}
-                    animate={{ opacity: [0, 1, 1, 0], y: -40, scale: [0.5, 1.2, 1, 0.8] }}
-                    transition={{ duration: 2, times: [0, 0.2, 0.8, 1] }}
-                    className="absolute -top-6 right-12 z-10 font-bold text-amber-500 text-sm flex items-center gap-1 drop-shadow-md"
+                    initial={{ opacity: 0, y: 0, scale: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0], y: -50, scale: [0, 1, 1, 0.5] }}
+                    transition={{ duration: 2.5, times: [0, 0.1, 0.7, 1], ease: "easeOut" }}
+                    className="absolute -top-8 right-16 z-20 font-black text-lg flex items-center gap-1 drop-shadow-xl"
                   >
-                    +15 XP <Sparkles className="h-3 w-3" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-lime-400 to-cyan-400">+15 XP</span>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5 }}>
+                      <Sparkles className="h-5 w-5 text-lime-400" />
+                    </motion.div>
                   </motion.div>
                 )}
 
                 {/* Avatar */}
-                <div
-                  className={`h-9 w-9 rounded-2xl flex items-center justify-center shrink-0 mt-0.5 shadow-md ${
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className={`h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 mt-1 shadow-lg ${
                     msg.role === "ai"
-                      ? "gradient-primary shadow-primary/30 glow-primary"
-                      : "bg-gradient-to-br from-slate-600 to-slate-800"
+                      ? "bg-gradient-to-br from-cyan-500 to-lime-500 text-black shadow-cyan-500/30"
+                      : "bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-slate-600/30"
                   }`}
                 >
                   {msg.role === "ai" ? (
-                    <Bot className="h-5 w-5 text-white" />
+                    <Bot className="h-5 w-5" />
                   ) : (
-                    <User className="h-5 w-5 text-white" />
+                    <User className="h-5 w-5" />
                   )}
-                </div>
+                </motion.div>
 
-                {/* Bubble */}
-                <div className={`max-w-[85%] sm:max-w-[75%] space-y-1 ${msg.role === "user" ? "items-end" : ""}`}>
+                {/* Message Bubble */}
+                <div className={`max-w-[75%] md:max-w-[65%] space-y-2 ${msg.role === "user" ? "items-end flex flex-col" : ""}`}>
                   <div
-                    className={`px-5 py-3.5 text-[15px] leading-relaxed relative ${
+                    className={`px-5 py-3.5 text-sm leading-relaxed rounded-2xl transition-all ${
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm shadow-md shadow-primary/20"
-                        : "bg-muted/60 border border-border/50 text-muted-foreground rounded-2xl rounded-tl-sm backdrop-blur-sm shadow-sm"
+                        ? "bg-gradient-to-br from-cyan-500 to-lime-500 text-black rounded-br-sm font-semibold shadow-lg shadow-cyan-500/20"
+                        : "bg-muted/50 border border-cyan-500/30 text-muted-foreground rounded-bl-sm backdrop-blur-sm shadow-md shadow-black/5"
                     }`}
                   >
                     {renderContent(msg.content)}
                   </div>
                   <p
-                    className={`text-[10px] text-muted-foreground/60 px-1 font-medium ${
+                    className={`text-xs text-muted-foreground/60 px-2 font-medium ${
                       msg.role === "user" ? "text-right" : ""
                     }`}
                   >
@@ -184,65 +192,59 @@ export default function AISolver() {
             ))}
           </AnimatePresence>
 
-          {/* Typing indicator */}
+          {/* Typing Indicator */}
           <AnimatePresence>
             {isTyping && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
                 className="flex gap-3"
               >
-                <div className="h-9 w-9 rounded-2xl gradient-primary flex items-center justify-center shadow-md shadow-primary/30 glow-primary">
-                  <Bot className="h-5 w-5 text-white" />
+                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-lime-500 flex items-center justify-center shadow-lg shadow-cyan-500/30 text-black">
+                  <Bot className="h-5 w-5" />
                 </div>
-                <div className="bg-muted/60 border border-border/50 rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-1.5 backdrop-blur-sm h-[42px]">
-                  <motion.span 
-                    animate={{ y: [0, -5, 0] }} 
-                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0 }}
-                    className="w-2.5 h-2.5 rounded-full bg-primary/60" 
-                  />
-                  <motion.span 
-                    animate={{ y: [0, -5, 0] }} 
-                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.2 }}
-                    className="w-2.5 h-2.5 rounded-full bg-primary/60" 
-                  />
-                  <motion.span 
-                    animate={{ y: [0, -5, 0] }} 
-                    transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.4 }}
-                    className="w-2.5 h-2.5 rounded-full bg-primary/60" 
-                  />
+                <div className="bg-muted/50 border border-cyan-500/30 rounded-2xl rounded-bl-sm px-5 py-3.5 flex items-center gap-2 backdrop-blur-sm h-fit">
+                  <motion.span animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0 }} className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                  <motion.span animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.2 }} className="w-2.5 h-2.5 rounded-full bg-lime-400" />
+                  <motion.span animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.4 }} className="w-2.5 h-2.5 rounded-full bg-green-400" />
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Suggestion chips — show only initially */}
+          {/* Suggestion Cards */}
           <AnimatePresence>
             {showSuggestions && (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ delay: 0.4, type: "spring" }}
-                className="pt-4"
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ delay: 0.4 }}
+                className="pt-4 space-y-4"
               >
-                <p className="text-xs text-muted-foreground mb-3 font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                  <Sparkles className="h-3 w-3 text-primary" /> Start a Challenge
-                </p>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-lime-400" />
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Try asking about</p>
+                </div>
                 <div className="grid sm:grid-cols-2 gap-3">
-                  {suggestions.map((s) => (
+                  {suggestions.map((s, i) => (
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                       key={s.text}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + i * 0.08 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => sendMessage(s.text)}
-                      className="flex items-center gap-3 p-4 rounded-2xl border-2 border-border/60 text-sm text-left hover:border-primary/50 hover:bg-primary/5 transition-all group bg-background/50"
+                      className="relative flex items-start gap-3 p-4 rounded-2xl border border-border/60 text-left group overflow-hidden hover:border-cyan-500/40 transition-all"
                     >
-                      <div className="h-8 w-8 rounded-xl bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors shrink-0">
-                        <s.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-lime-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-lime-500/20 flex items-center justify-center shrink-0 border border-cyan-500/30 group-hover:border-cyan-500/60 transition-all relative z-10">
+                        <s.icon className="h-5 w-5 text-cyan-400" />
                       </div>
-                      <span className="text-muted-foreground font-semibold group-hover:text-foreground transition-colors">
+                      <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors relative z-10 leading-snug">
                         {s.text}
                       </span>
                     </motion.button>
@@ -255,36 +257,40 @@ export default function AISolver() {
           <div ref={endRef} />
         </div>
 
-        {/* Input area */}
-        <div className="p-4 sm:p-5 border-t border-border/50 bg-muted/20 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center gap-2 bg-background border-2 border-border/60 rounded-2xl px-4 py-2 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all shadow-sm inset-shadow-sm">
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                placeholder="Ask your doubt to earn XP..."
-                className="flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground/60 font-medium"
-                disabled={isTyping}
-              />
+        {/* Input Area */}
+        <div className="border-t border-cyan-500/20 bg-gradient-to-t from-muted/30 to-transparent backdrop-blur-md p-4 md:p-5 space-y-3">
+          <div className="flex items-end gap-3">
+            <div className="flex-1 relative group">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500 to-lime-500 opacity-0 group-focus-within:opacity-20 blur transition-opacity pointer-events-none" />
+              <div className="relative flex items-end gap-2 bg-background border-2 border-border/60 rounded-2xl px-4 py-2 group-focus-within:border-cyan-500/60 group-focus-within:ring-4 group-focus-within:ring-cyan-500/10 transition-all shadow-sm">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                  placeholder="Ask me anything..."
+                  className="flex-1 bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground/50 font-medium leading-relaxed"
+                  disabled={isTyping}
+                />
+              </div>
             </div>
-            <Button
-              size="icon"
-              className={`h-14 w-14 rounded-2xl shrink-0 transition-all duration-300 btn-lift flex flex-col items-center justify-center gap-0.5 ${
-                input.trim()
-                  ? "gradient-primary text-white shadow-lg shadow-primary/30"
-                  : "bg-muted text-muted-foreground border-2 border-border/50"
-              }`}
+            <motion.button
+              whileHover={{ scale: input.trim() ? 1.05 : 1 }}
+              whileTap={{ scale: input.trim() ? 0.95 : 1 }}
               onClick={() => sendMessage()}
               disabled={!input.trim() || isTyping}
+              className={`h-[44px] w-[44px] rounded-2xl shrink-0 flex items-center justify-center font-bold transition-all duration-300 ${
+                input.trim()
+                  ? "bg-gradient-to-r from-cyan-500 to-lime-500 text-black shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50"
+                  : "bg-muted text-muted-foreground border-2 border-border/50 cursor-not-allowed"
+              }`}
             >
               <Send className="h-5 w-5" />
-            </Button>
+            </motion.button>
           </div>
-          <p className="text-[10px] text-muted-foreground/60 text-center mt-3 font-medium">
-            AI can make mistakes. Check important info.
-          </p>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-[11px] text-muted-foreground/60 text-center font-medium">
+            AI can make mistakes. Check important info. • Earn +15 XP per doubt
+          </motion.p>
         </div>
       </motion.div>
     </motion.div>
