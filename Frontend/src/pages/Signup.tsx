@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest, saveAuthSession } from "@/lib/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -28,45 +29,24 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [isOtpMode, setIsOtpMode] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
+  };
 
   const handleSendOtp = () => {
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      alert("Please fill all fields before requesting OTP.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
-    }
-
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(newOtp);
-    setOtpSent(true);
-    setOtpVerified(false);
-    alert(`Demo OTP sent to ${email}: ${newOtp}`);
+    alert("OTP signup is not configured. Please use password signup.");
   };
 
-  const handleVerifyOtpAndSignup = () => {
-    if (!otpSent) {
-      alert("Send OTP first.");
-      return;
-    }
-
-    if (otp === generatedOtp) {
-      setOtpVerified(true);
-      alert("OTP verified. Signup completed.");
-      return;
-    }
-
-    setOtpVerified(false);
-    alert("Invalid OTP. Please try again.");
+  const handleVerifyOtpAndSignup = async () => {
+    alert("OTP signup is not configured. Please use password signup.");
   };
 
-  const handlePasswordSignup = () => {
+  const handlePasswordSignup = async () => {
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       alert("Please fill all fields.");
       return;
@@ -77,7 +57,22 @@ export default function Signup() {
       return;
     }
 
-    alert("Signup submitted.");
+    setIsSubmitting(true);
+    try {
+      const data = await apiRequest<{ token: string; user: { id: string; name: string; email: string } }>(
+        "/api/v1/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify({ name, email, password })
+        }
+      );
+      saveAuthSession(data.token, data.user);
+      navigate("/dashboard");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Signup failed."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -261,31 +256,26 @@ export default function Signup() {
                     </Button>
                     <Button
                       type="button"
+                      disabled={isSubmitting}
                       className="h-11 bg-gradient-to-r from-cyan-500 to-lime-500 font-semibold text-black hover:opacity-95"
                       onClick={handleVerifyOtpAndSignup}
                     >
-                      Verify OTP
+                      {isSubmitting ? "Verifying..." : "Verify OTP"}
                     </Button>
                   </div>
 
-                  {otpSent && (
-                    <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
-                      OTP sent in demo mode. Check alert for the test code.
-                    </p>
-                  )}
-                  {otpVerified && (
-                    <p className="rounded-lg border border-lime-500/30 bg-lime-500/10 px-3 py-2 text-xs font-medium text-lime-300">
-                      OTP verified. Signup completed.
-                    </p>
-                  )}
+                  <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
+                    Use password mode to create your account.
+                  </p>
                 </>
               ) : (
                 <Button
                   type="button"
                   onClick={handlePasswordSignup}
+                  disabled={isSubmitting}
                   className="group mt-2 h-11 w-full bg-gradient-to-r from-cyan-500 to-lime-500 text-sm font-semibold text-black hover:opacity-95"
                 >
-                  Create Account
+                  {isSubmitting ? "Creating Account..." : "Create Account"}
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               )}
