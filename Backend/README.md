@@ -1,4 +1,4 @@
-# Study Companion Backend
+# RankYodha Backend
 
 Backend API built with Node.js, Express, and MongoDB using a modular `src/` architecture.
 
