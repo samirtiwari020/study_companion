@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
+import { useCourse } from "@/contexts/CourseContext";
+import { getCourseData, getCourseColorScheme } from "@/utils/courseData";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -28,9 +30,6 @@ const stagger: Variants = {
   show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0 } },
 };
 
-const topics = ["Physics", "Chemistry", "Mathematics", "Biology", "History", "Economy", "Polity"];
-const difficulties = ["Easy", "Medium", "Hard"];
-
 interface QuestionData {
   id?: string;
   question: string;
@@ -39,6 +38,8 @@ interface QuestionData {
   hint1: string;
   hint2: string;
   solution: string;
+  questionType?: "MCQ" | "Numerical" | "ShortAnswer";
+  numericalAnswer?: string;
 }
 
 interface PracticeApiQuestion {
@@ -50,19 +51,106 @@ interface PracticeApiQuestion {
   hint1?: string;
   hint2?: string;
   solution?: string;
+  questionType?: "MCQ" | "Numerical" | "ShortAnswer";
+  answer?: string;
+}
+
+interface AdaptivePracticeResponse {
+  count: number;
+  questions: PracticeApiQuestion[];
+}
+
+interface AdaptiveNextQuestionResponse {
+  subject: string;
+  topic: string | null;
+  recommendedDifficulty: "Easy" | "Medium" | "Hard";
+  question: PracticeApiQuestion | null;
+}
+
+interface AdaptiveSubmitResponse {
+  score: number;
+  totalAttempted: number;
+  evaluatedSubmissions: Array<{
+    questionId: string;
+    selectedAnswer: string | number;
+    correctAnswer: "A" | "B" | "C" | "D" | null;
+    isCorrect: boolean;
+  }>;
 }
 
 interface QuestionResult {
   questionData: QuestionData;
   selectedOption: number | null;
   usedHint: boolean;
+  isCorrect: boolean;
+  correctAnswerLetter: "A" | "B" | "C" | "D" | null;
   marksEarned: number;
 }
 
+const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
+
+const parseQuestionText = (rawQuestion: string, apiOptions?: string[]) => {
+  if (Array.isArray(apiOptions) && apiOptions.length >= 2) {
+    return {
+      questionText: rawQuestion,
+      options: apiOptions.slice(0, 4)
+    };
+  }
+
+  const text = String(rawQuestion || "").replace(/\r/g, "\n").trim();
+  const markerRegex = /(?:^|\n|\s)(?:\(?)([A-D])(?:\)|[).:\-])\s*/g;
+  const markers: Array<{ letter: string; index: number; markerEnd: number }> = [];
+  let markerMatch;
+
+  while ((markerMatch = markerRegex.exec(text)) !== null) {
+    markers.push({
+      letter: markerMatch[1],
+      index: markerMatch.index,
+      markerEnd: markerRegex.lastIndex
+    });
+  }
+
+  if (markers.length >= 2) {
+    const firstMarker = markers[0];
+    const stem = text.slice(0, firstMarker.index).trim();
+    const optionBuckets = new Map<string, string>();
+
+    markers.forEach((marker, i) => {
+      const end = i + 1 < markers.length ? markers[i + 1].index : text.length;
+      const content = text.slice(marker.markerEnd, end).trim();
+      if (content) {
+        optionBuckets.set(marker.letter, content);
+      }
+    });
+
+    const orderedOptions = OPTION_LETTERS.map((letter) => optionBuckets.get(letter) || "").filter(Boolean);
+
+    if (orderedOptions.length >= 2) {
+      return {
+        questionText: stem || rawQuestion,
+        options: orderedOptions.slice(0, 4)
+      };
+    }
+  }
+
+  return {
+    questionText: rawQuestion,
+    options: Array.isArray(apiOptions) ? apiOptions.slice(0, 4) : []
+  };
+};
+
 export default function Practice() {
+  const { selectedCourse } = useCourse();
+  const courseData = getCourseData(selectedCourse);
+  const courseColors = getCourseColorScheme(selectedCourse);
+  
+  // Use course-specific subjects or default topics
+  const topics = courseData.subjects;
+  const difficulties = ["Easy", "Medium", "Hard"];
+  
   const [stage, setStage] = useState<"select" | "quiz" | "evaluation">("select");
   const [selectedTopic, setSelectedTopic] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<"Easy" | "Medium" | "Hard">("Medium");
 
   // Quiz State
   const [loading, setLoading] = useState(false);
@@ -70,6 +158,7 @@ export default function Practice() {
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [numericalAnswer, setNumericalAnswer] = useState<string>("");
 
   // Scoring & Hints Status
   const [timeElapsed, setTimeElapsed] = useState(0);
@@ -83,15 +172,43 @@ export default function Practice() {
     return fallback;
   };
 
-  const normalizeQuestion = (item: PracticeApiQuestion): QuestionData => ({
-    id: item._id || item.id,
-    question: item.question || "Question unavailable",
-    options: Array.isArray(item.options) ? item.options : [],
-    correctAnswerIndex: Number(item.correctAnswerIndex ?? 0),
-    hint1: item.hint1 || "Use elimination and identify the core concept first.",
-    hint2: item.hint2 || "Re-check units/keywords before finalizing.",
-    solution: item.solution || "Review the concept summary for this topic to confirm your reasoning."
-  });
+  const normalizeQuestion = (item: PracticeApiQuestion): QuestionData => {
+    const questionType = item.questionType || "MCQ";
+    const rawQuestion = item.question || "Question unavailable";
+    
+    // For MCQ questions, prioritize options from database
+    let options: string[] = [];
+    let correctAnswerIndex: number = -1;
+    
+    if (questionType === "MCQ") {
+      // Use options from database if available
+      if (Array.isArray(item.options) && item.options.length >= 2) {
+        options = item.options.slice(0, 4);
+        correctAnswerIndex = item.correctAnswerIndex ?? -1;
+      } else {
+        // Fallback: try to parse from question text
+        const { questionText, options: parsedOptions } = parseQuestionText(rawQuestion, item.options);
+        options = parsedOptions;
+        correctAnswerIndex = item.correctAnswerIndex ?? -1;
+      }
+    } else if (questionType === "Numerical" || questionType === "ShortAnswer") {
+      // For numerical/short answer, just use question text
+      options = [];
+      correctAnswerIndex = -1;
+    }
+
+    return {
+      id: item._id || item.id,
+      question: rawQuestion,
+      options,
+      correctAnswerIndex,
+      questionType,
+      numericalAnswer: item.answer || undefined,
+      hint1: item.hint1 || "Use elimination and identify the core concept first.",
+      hint2: item.hint2 || "Re-check units/keywords before finalizing.",
+      solution: item.solution || "Review the concept summary for this topic to confirm your reasoning."
+    };
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -110,24 +227,30 @@ export default function Practice() {
     setResults([]);
     setErrorMsg("");
     setQuestions([]);
+    setSelectedOption(null);
+    setNumericalAnswer("");
 
     try {
-      const data = await apiRequest<PracticeApiQuestion | PracticeApiQuestion[]>(
-        "/api/v1/practice/generate",
-        {
-          method: "POST",
-          body: JSON.stringify({ topic: selectedTopic, difficulty: selectedDifficulty })
-        },
+      const requestTopic = selectedTopic === "Mathematics" ? "Math" : selectedTopic;
+      const data = await apiRequest<AdaptiveNextQuestionResponse>(
+        `/api/v1/adaptive-learning/next?subject=${encodeURIComponent(requestTopic)}`,
+        { method: "GET" },
         true
       );
 
-      const normalized = (Array.isArray(data) ? data : [data]).map(normalizeQuestion);
+      const normalized = data.question ? [normalizeQuestion(data.question)] : [];
+
+      if (normalized.length === 0) {
+        throw new Error("No adaptive question found for this subject. Import your question bank first.");
+      }
 
       setQuestions(normalized);
+      setSelectedDifficulty(data.recommendedDifficulty || "Medium");
 
       setTimeElapsed(0);
       setRevealedHints(0);
       setSelectedOption(null);
+      setNumericalAnswer("");
     } catch (error: unknown) {
       console.error(error);
       setErrorMsg(getErrorMessage(error, "Failed to load questions."));
@@ -138,49 +261,86 @@ export default function Practice() {
   };
 
   const startQuiz = () => {
-    if (selectedTopic && selectedDifficulty) {
+    if (selectedTopic) {
       fetchQuestions();
     }
   };
 
   const submitAnswer = () => {
-    if (selectedOption !== null) {
-      const currQ = questions[currentQIndex];
-      const usedHint = revealedHints > 0;
-      const processResult = (isCorrect: boolean) => {
-        const marks = (isCorrect && !usedHint) ? 4 : 0;
-        const res: QuestionResult = {
-          questionData: currQ,
-          selectedOption,
-          usedHint,
-          marksEarned: marks
-        };
+    const currQ = questions[currentQIndex];
+    const isMCQ = currQ.questionType === "MCQ";
+    const hasAnswer = isMCQ ? selectedOption !== null : numericalAnswer.trim().length > 0;
+    
+    if (!hasAnswer) return;
 
-        setResults(prev => [...prev, res]);
-
-        if (currentQIndex < questions.length - 1) {
-          setCurrentQIndex(prev => prev + 1);
-          setSelectedOption(null);
-          setRevealedHints(0);
-          setTimeElapsed(0);
-        } else {
-          setStage("evaluation");
-        }
+    const usedHint = revealedHints > 0;
+    const processResult = (isCorrect: boolean, correctAnswerText: string | null = null) => {
+      const marks = (isCorrect && !usedHint) ? 4 : 0;
+      const res: QuestionResult = {
+        questionData: currQ,
+        selectedOption: isMCQ ? selectedOption : -1,
+        usedHint,
+        isCorrect,
+        correctAnswerLetter: (correctAnswerText as any) || null,
+        marksEarned: marks
       };
 
-      if (currQ.id) {
-        apiRequest<{ isCorrect: boolean }>(
-          "/api/v1/practice/submit",
-          {
-            method: "POST",
-            body: JSON.stringify({ practiceId: currQ.id, selectedAnswerIndex: selectedOption })
-          },
-          true
-        )
-          .then((result) => processResult(Boolean(result.isCorrect)))
-          .catch(() => processResult(selectedOption === currQ.correctAnswerIndex));
+      setResults(prev => [...prev, res]);
+
+      if (currentQIndex < questions.length - 1) {
+        setCurrentQIndex(prev => prev + 1);
+        setSelectedOption(null);
+        setNumericalAnswer("");
+        setRevealedHints(0);
+        setTimeElapsed(0);
       } else {
+        setStage("evaluation");
+      }
+    };
+
+    if (currQ.id) {
+      let answerValue: string;
+      
+      if (isMCQ) {
+        answerValue = OPTION_LETTERS[selectedOption!] || OPTION_LETTERS[0];
+      } else {
+        answerValue = numericalAnswer.trim();
+      }
+
+      apiRequest<AdaptiveSubmitResponse>(
+        "/api/v1/adaptive-learning/submit",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            submissions: [{ questionId: currQ.id, selectedAnswer: answerValue }]
+          })
+        },
+        true
+      )
+        .then((result) => {
+          const submissionResult = result.evaluatedSubmissions?.[0];
+          processResult(Boolean(submissionResult?.isCorrect), submissionResult?.correctAnswer || null);
+        })
+        .catch(() => {
+          // Fallback: compare locally
+          if (isMCQ) {
+            processResult(selectedOption === currQ.correctAnswerIndex);
+          } else {
+            processResult(
+              numericalAnswer.toString().toLowerCase().trim() === 
+              (currQ.numericalAnswer || "").toString().toLowerCase().trim()
+            );
+          }
+        });
+    } else {
+      // No API call, compare locally
+      if (isMCQ) {
         processResult(selectedOption === currQ.correctAnswerIndex);
+      } else {
+        processResult(
+          numericalAnswer.toString().toLowerCase().trim() === 
+          (currQ.numericalAnswer || "").toString().toLowerCase().trim()
+        );
       }
     }
   };
@@ -195,22 +355,22 @@ export default function Practice() {
   const totalMarks = results.reduce((acc, r) => acc + r.marksEarned, 0);
   const questionsWithHints = results.filter(r => r.usedHint).length;
   const correctWithoutHints = results.filter(r => r.marksEarned === 4).length;
-  const correct = results.filter(r => r.selectedOption === r.questionData.correctAnswerIndex).length;
-  const incorrect = results.filter(r => r.selectedOption !== r.questionData.correctAnswerIndex).length;
+  const correct = results.filter(r => r.isCorrect).length;
+  const incorrect = results.filter(r => !r.isCorrect).length;
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8 pb-12">
       {/* Hero Command Center */}
-      <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/15 via-lime-500/5 to-transparent p-8 md:p-12">
+      <motion.div variants={fadeUp} className={`relative overflow-hidden rounded-3xl border ${courseColors.border} bg-gradient-to-br ${courseColors.bg} p-8 md:p-12`}>
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-cyan-500 to-lime-500 opacity-10 blur-3xl" />
         <div className="absolute -left-32 -bottom-32 h-64 w-64 rounded-full bg-cyan-500 opacity-5 blur-3xl" />
         <div className="relative z-10 max-w-2xl">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-gradient-to-r from-cyan-500/30 to-lime-500/30 border border-cyan-500/50">
-            <Zap className="h-4 w-4 text-cyan-400" />
-            <span className="text-xs font-bold text-cyan-300 uppercase tracking-widest">Practice Mode</span>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className={`inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full ${courseColors.badge}`}>
+            <Zap className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-widest">{courseData.name} - Practice</span>
           </motion.div>
-          <h1 className="text-4xl md:text-5xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-lime-400 to-green-400">Master Your Skills</h1>
-          <p className="text-lg text-foreground/70 leading-relaxed">Select a topic and difficulty level to generate personalized practice questions. Perfect your answers for +4 marks or use hints for guidance.</p>
+          <h1 className="text-4xl md:text-5xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-lime-400 to-green-400">Master {courseData.subjects.join(", ")}</h1>
+          <p className="text-lg text-foreground/70 leading-relaxed">Practice {courseData.subjects.length} core subjects. Select a topic and difficulty to generate personalized questions. Perfect your answers for +4 marks or use hints for guidance.</p>
         </div>
       </motion.div>
 
@@ -385,37 +545,57 @@ export default function Practice() {
               {/* Question Text */}
               <h2 className="text-2xl font-bold leading-relaxed mb-6">{questions[currentQIndex].question}</h2>
 
-              {/* Options */}
-              <div className="space-y-3 mb-8">
-                {questions[currentQIndex].options.map((opt, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => setSelectedOption(i)}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + i * 0.08 }}
-                    whileHover={{ x: 8 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative w-full text-left rounded-2xl p-4 border-2 transition-all overflow-hidden group ${
-                      selectedOption === i
-                        ? "border-cyan-500 bg-gradient-to-r from-cyan-500/20 to-lime-500/20 shadow-lg shadow-cyan-500/20"
-                        : "border-border/60 glass-card hover:border-cyan-500/40"
-                    }`}
-                  >
-                    <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOption !== i ? "bg-gradient-to-r from-cyan-500/10 to-lime-500/10" : ""}`} />
-                    <div className="relative z-10 flex items-start gap-4">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-all ${
+              {/* Answer Options - MCQ or Numerical */}
+              {questions[currentQIndex].questionType === "MCQ" ? (
+                // MCQ Options
+                <div className="space-y-3 mb-8">
+                  {questions[currentQIndex].options.map((opt, i) => (
+                    <motion.button
+                      key={i}
+                      onClick={() => setSelectedOption(i)}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + i * 0.08 }}
+                      whileHover={{ x: 8 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`relative w-full text-left rounded-2xl p-4 border-2 transition-all overflow-hidden group ${
                         selectedOption === i
-                          ? "bg-gradient-to-br from-cyan-500 to-lime-500 text-black"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {String.fromCharCode(65 + i)}
+                          ? "border-cyan-500 bg-gradient-to-r from-cyan-500/20 to-lime-500/20 shadow-lg shadow-cyan-500/20"
+                          : "border-border/60 glass-card hover:border-cyan-500/40"
+                      }`}
+                    >
+                      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOption !== i ? "bg-gradient-to-r from-cyan-500/10 to-lime-500/10" : ""}`} />
+                      <div className="relative z-10 flex items-start gap-4">
+                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-all ${
+                          selectedOption === i
+                            ? "bg-gradient-to-br from-cyan-500 to-lime-500 text-black"
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {String.fromCharCode(65 + i)}
+                        </div>
+                        <span className="flex-1 text-sm font-medium leading-relaxed">{opt}</span>
                       </div>
-                      <span className="flex-1 text-sm font-medium leading-relaxed">{opt}</span>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+                    </motion.button>
+                  ))}
+                </div>
+              ) : (
+                // Numerical Answer Input
+                <div className="mb-8 space-y-3">
+                  <label className="block text-sm font-semibold text-foreground/70">Enter your answer:</label>
+                  <input
+                    type="text"
+                    value={numericalAnswer}
+                    onChange={(e) => setNumericalAnswer(e.target.value)}
+                    placeholder="Type your answer here..."
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-border/60 bg-muted/40 focus:border-cyan-500 focus:outline-none transition-all text-lg font-medium"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {questions[currentQIndex].questionType === "Numerical" 
+                      ? "Enter a numerical value (units may be included)" 
+                      : "Enter your short answer"}
+                  </p>
+                </div>
+              )}
 
               {/* Hints Section */}
               <div className="border-t border-border/40 pt-6 space-y-4">
@@ -499,7 +679,11 @@ export default function Practice() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
             <Button
               onClick={submitAnswer}
-              disabled={selectedOption === null}
+              disabled={
+                questions[currentQIndex].questionType === "MCQ"
+                  ? selectedOption === null
+                  : numericalAnswer.trim().length === 0
+              }
               className="w-full h-12 text-base font-bold bg-gradient-to-r from-cyan-500 to-lime-500 text-black hover:shadow-lg hover:shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
             >
               {currentQIndex < questions.length - 1 ? "Submit & Next Question" : "Submit & Get Results"}
@@ -579,7 +763,10 @@ export default function Practice() {
 
             <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-4">
               {results.map((r, i) => {
-                const isCorrect = r.marksEarned > 0;
+                const isCorrect = r.isCorrect;
+                const serverCorrectIndex = r.correctAnswerLetter
+                  ? OPTION_LETTERS.indexOf(r.correctAnswerLetter)
+                  : r.questionData.correctAnswerIndex;
                 return (
                   <motion.div
                     key={i}
@@ -612,7 +799,7 @@ export default function Practice() {
                       <div className="space-y-2">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">All Options</p>
                         {r.questionData.options.map((opt, optIdx) => {
-                          const isCorrectOption = optIdx === r.questionData.correctAnswerIndex;
+                          const isCorrectOption = optIdx === serverCorrectIndex;
                           const isSelected = optIdx === r.selectedOption;
                           return (
                             <div
