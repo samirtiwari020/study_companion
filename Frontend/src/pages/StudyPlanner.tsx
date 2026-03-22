@@ -4,6 +4,8 @@ import { Calendar, Sparkles, BookOpen, Clock, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/api";
+import { useCourse } from "@/contexts/CourseContext";
+import { getCourseData, getCourseColorScheme } from "@/utils/courseData";
 
 interface PlanTopic {
   name: string;
@@ -20,6 +22,10 @@ interface StudyPlan {
 }
 
 export default function StudyPlanner() {
+  const { selectedCourse } = useCourse();
+  const courseData = getCourseData(selectedCourse);
+  const courseColors = getCourseColorScheme(selectedCourse);
+  
   const [title, setTitle] = useState("");
   const [examDate, setExamDate] = useState("");
   const [topicsInput, setTopicsInput] = useState("");
@@ -82,9 +88,11 @@ export default function StudyPlanner() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-10">
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-lime-500/10 p-6">
-        <h1 className="text-3xl font-black">Study Planner</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Create plans and load your saved plans from database-backed backend APIs.</p>
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`rounded-2xl border ${courseColors.border} bg-gradient-to-br ${courseColors.bg} p-6`}>
+        <h1 className="text-3xl font-black">{courseData.name} - Study Planner</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Create a personalized study schedule for {courseData.subjects.join(", ")}. Organize topics, set goals, and track progress.
+        </p>
       </motion.div>
 
       <motion.form initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} onSubmit={createPlan} className="space-y-4 rounded-2xl border border-border/60 p-5">
@@ -100,7 +108,7 @@ export default function StudyPlanner() {
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium">Topics (comma separated)</label>
-          <Input value={topicsInput} onChange={(e) => setTopicsInput(e.target.value)} placeholder="Polity, Economy, Modern History" />
+          <Input value={topicsInput} onChange={(e) => setTopicsInput(e.target.value)} placeholder={`e.g., ${courseData.subjects.join(", ")}`} />
         </div>
         <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-cyan-500 to-lime-500 text-black">
           <PlusCircle className="mr-2 h-4 w-4" />
