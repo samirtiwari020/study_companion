@@ -17,6 +17,7 @@ import {
   Legend,
 } from "recharts";
 import { apiRequest } from "@/lib/api";
+import { RetentionGraph } from "@/components/RetentionGraph";
 
 type AnalyticsData = {
   practiceCount: number;
@@ -214,7 +215,12 @@ export default function Analytics() {
         </motion.div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Spaced Repetition Knowledge Graph */}
+      <motion.div variants={fadeUp} className="w-full">
+        <RetentionGraph />
+      </motion.div>
+
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
         <motion.div variants={fadeUp} className="glass-card rounded-2xl border border-border/50 p-5">
           <h3 className="text-sm font-semibold mb-4 inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-cyan-400" /> Activity Mix</h3>
           <div className="h-64">
