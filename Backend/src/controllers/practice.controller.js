@@ -45,6 +45,7 @@ export const generatePractice = asyncHandler(async (req, res) => {
 
 export const submitPractice = asyncHandler(async (req, res) => {
   const { practiceId, selectedAnswerIndex } = req.body;
+
   const practice = await Practice.findOne({ _id: practiceId, user: req.user._id });
 
   if (!practice) {

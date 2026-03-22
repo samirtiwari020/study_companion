@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, CheckCircle, BrainCircuit, UserCheck, PlayCircle, Loader2, Send, Zap, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api";
 
 interface Report {
   overallScore: number;
@@ -47,18 +48,17 @@ export default function Interview() {
   const startInterview = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/interview/generate", {
+      const data = await apiRequest<{ questions: string[] }>("/api/v1/interview/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, topic: "Ethics and General Knowledge" })
       });
-      const data = await res.json();
-      setQuestions(data.questions);
+      setQuestions(Array.isArray(data.questions) ? data.questions : []);
       setStage("interview");
       setCurrentQIndex(0);
       setQaPairs([]);
     } catch (err) {
       console.error(err);
+      alert("Failed to start interview.");
     } finally {
       setLoading(false);
     }
@@ -74,16 +74,15 @@ export default function Interview() {
     } else {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/interview/evaluate", {
+        const data = await apiRequest<Report>("/api/v1/interview/evaluate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ role, qaPairs: newPairs })
         });
-        const data = await res.json();
         setReport(data);
         setStage("report");
       } catch (err) {
         console.error(err);
+        alert("Failed to evaluate interview.");
       } finally {
         setLoading(false);
       }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Sparkles, FileText, AlertCircle, Loader2, BookOpen, Zap, Target, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api";
 
 interface OnePagerData {
   title: string;
@@ -48,6 +49,13 @@ export default function OnePager() {
   const [data, setData] = useState<OnePagerData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    if (err instanceof Error && err.message) {
+      return err.message;
+    }
+    return fallback;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -64,20 +72,13 @@ export default function OnePager() {
     formData.append("document", file);
 
     try {
-      const response = await fetch("http://localhost:5000/api/generate-one-pager", {
+      const result = await apiRequest<OnePagerData>("/api/v1/onepager/generate", {
         method: "POST",
-        body: formData,
+        body: formData
       });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to generate One-Pager");
-      }
-
-      const result = await response.json();
       setData(result);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to generate One-Pager"));
     } finally {
       setLoading(false);
     }

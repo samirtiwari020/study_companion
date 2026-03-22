@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest, saveAuthSession } from "@/lib/api";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -25,43 +26,51 @@ export default function Auth() {
   const [otp, setOtp] = useState("");
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [otpEmail, setOtpEmail] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
+  };
 
   const handleSendOtp = () => {
-    if (!otpEmail.trim()) {
-      return;
-    }
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(newOtp);
-    setOtpSent(true);
-    setOtpVerified(false);
-    setResendTimer(30);
-    alert(`Demo OTP: ${newOtp}`);
+    alert("OTP login is not configured. Please use password login.");
   };
 
   const handleVerifyOtp = () => {
-    if (!otpSent || otp !== generatedOtp) {
-      alert("Invalid OTP");
-      return;
-    }
-    setOtpVerified(true);
-    alert("OTP verified!");
+    alert("OTP login is not configured. Please use password login.");
   };
 
-  const handlePasswordLogin = (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       alert("Please fill in all fields");
       return;
     }
-    alert("Login submitted (frontend only)");
+
+    setIsSubmitting(true);
+    try {
+      const data = await apiRequest<{ token: string; user: { id: string; name: string; email: string } }>(
+        "/api/v1/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password })
+        }
+      );
+
+      saveAuthSession(data.token, data.user);
+      navigate("/dashboard");
+    } catch (error: unknown) {
+      alert(getErrorMessage(error, "Login failed"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogleLogin = () => {
-    alert("Google login clicked (frontend only)");
+    alert("Google login is not configured yet.");
   };
 
   const containerVariants = {
@@ -184,8 +193,6 @@ export default function Auth() {
                 onClick={() => {
                   setIsOtpMode(false);
                   setOtp("");
-                  setOtpSent(false);
-                  setOtpVerified(false);
                 }}
                 variant={isOtpMode ? "outline" : "default"}
                 className={isOtpMode ? "h-11" : "h-11 bg-gradient-to-r from-cyan-500 to-lime-500 text-black hover:opacity-95"}
@@ -197,8 +204,6 @@ export default function Auth() {
                 onClick={() => {
                   setIsOtpMode(true);
                   setOtp("");
-                  setOtpSent(false);
-                  setOtpVerified(false);
                 }}
                 variant={isOtpMode ? "default" : "outline"}
                 className={isOtpMode ? "h-11 bg-gradient-to-r from-cyan-500 to-lime-500 text-black hover:opacity-95" : "h-11"}
@@ -254,16 +259,9 @@ export default function Auth() {
                     </Button>
                   </div>
 
-                  {otpSent && (
-                    <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
-                      OTP sent in demo mode. Check the alert message.
-                    </p>
-                  )}
-                  {otpVerified && (
-                    <p className="rounded-lg border border-lime-500/30 bg-lime-500/10 px-3 py-2 text-xs font-medium text-lime-300">
-                      OTP verified successfully.
-                    </p>
-                  )}
+                  <p className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
+                    OTP login is currently unavailable. Use password sign in.
+                  </p>
                 </>
               ) : (
                 <>
@@ -311,9 +309,10 @@ export default function Auth() {
                   <Button
                     type="button"
                     onClick={handlePasswordLogin}
+                    disabled={isSubmitting}
                     className="group mt-2 h-11 w-full bg-gradient-to-r from-cyan-500 to-lime-500 text-sm font-semibold text-black hover:opacity-95"
                   >
-                    Sign In
+                    {isSubmitting ? "Signing In..." : "Sign In"}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </>
@@ -323,7 +322,7 @@ export default function Auth() {
             <div className="mt-6 rounded-xl border border-border/50 bg-muted/20 p-3">
               <p className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-                {resendTimer > 0 ? `Try resend in ${resendTimer}s` : "Quick tip: OTP mode is enabled for demo testing."}
+                Quick tip: use password mode for production backend login.
               </p>
             </div>
 
