@@ -85,7 +85,7 @@ export function AppSidebar() {
             <Brain className="h-4.5 w-4.5 text-primary-foreground" />
           </div>
           {!collapsed && (
-            <span className="font-extrabold text-lg gradient-text tracking-tight">NeuroPrep</span>
+            <span className="font-extrabold text-lg gradient-text tracking-tight">RankYodha</span>
           )}
         </div>
       </SidebarHeader>

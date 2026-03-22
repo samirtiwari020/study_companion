@@ -31,7 +31,7 @@ export default function Profile() {
         </div>
         <div>
           <h3 className="font-bold text-lg">Learner</h3>
-          <p className="text-sm text-muted-foreground">learner@neuroprep.ai</p>
+          <p className="text-sm text-muted-foreground">learner@rankyodha.ai</p>
           <p className="text-xs text-primary mt-1">Level 7 · 2,450 XP</p>
         </div>
       </motion.div>
