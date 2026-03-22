@@ -31,10 +31,34 @@ import {
   Cell,
   Legend,
 } from "recharts";
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { format, subDays } from "date-fns";
 import CalendarHeatmap from "react-calendar-heatmap";
 import "react-calendar-heatmap/dist/styles.css";
-import { useMemo, useState, type ComponentType, type ReactNode } from "react";
-import { format, subDays } from "date-fns";
+import { apiRequest } from "@/lib/api";
+import { RetentionGraph } from "@/components/RetentionGraph";
+
+type AnalyticsData = {
+  practiceCount: number;
+  correctCount: number;
+  accuracy: number;
+  upcomingRevisions: number;
+  notesCount: number;
+};
+
+type RevisionData = {
+  _id: string;
+  topic: string;
+  nextRevisionAt: string;
+  confidence: number;
+};
+
+type GamificationData = {
+  user?: {
+    points?: number;
+  };
+  achievements?: { _id: string; title: string }[];
+};
 
 type Trend = "up" | "down";
 
@@ -270,12 +294,100 @@ function HeatmapCard({
 }
 
 export default function Analytics() {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [revisions, setRevisions] = useState<RevisionData[]>([]);
+  const [gami, setGami] = useState<GamificationData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedRange, setSelectedRange] = useState<"90d" | "180d" | "365d">("365d");
 
-  const xpCurrent = 2780;
-  const xpTarget = 3500;
-  const level = 4;
-  const streakDays = 18;
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [a, r, g] = await Promise.all([
+          apiRequest<AnalyticsData>("/api/v1/analytics", { method: "GET" }, true),
+          apiRequest<RevisionData[]>("/api/v1/revision", { method: "GET" }, true),
+          apiRequest<GamificationData>("/api/v1/gamification", { method: "GET" }, true),
+        ]);
+
+        setAnalytics(a);
+        setRevisions(Array.isArray(r) ? r : []);
+        setGami(g);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  const weeklyRevisionTrend = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 10 }).map((_, idx) => {
+      const day = new Date(today);
+      day.setDate(today.getDate() - (9 - idx));
+      const key = day.toDateString();
+      const count = revisions.filter((item) => new Date(item.nextRevisionAt).toDateString() === key).length;
+      return {
+        date: `${day.getMonth() + 1}/${day.getDate()}`,
+        count,
+      };
+    });
+  }, [revisions]);
+
+  const topicDistribution = useMemo(() => {
+    const map = revisions.reduce<Record<string, number>>((acc, item) => {
+      const label = item.topic.split("-")[0].trim() || "General";
+      acc[label] = (acc[label] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(map)
+      .map(([subject, total]) => ({ subject, total }))
+      .slice(0, 6);
+  }, [revisions]);
+
+  const dynamicTimeDistribution = useMemo(() => {
+    const practice = analytics?.practiceCount ?? 0;
+    const revision = analytics?.upcomingRevisions ?? 0;
+    const notes = analytics?.notesCount ?? 0;
+    const total = Math.max(1, practice + revision + notes);
+
+    return [
+      { name: "Practice", value: Math.round((practice / total) * 100), color: "#06b6d4" },
+      { name: "Revision", value: Math.round((revision / total) * 100), color: "#84cc16" },
+      { name: "Notes", value: Math.round((notes / total) * 100), color: "#22c55e" },
+    ];
+  }, [analytics]);
+
+  const dynamicInsights = useMemo(() => {
+    const accuracy = analytics?.accuracy ?? 0;
+    const upcoming = analytics?.upcomingRevisions ?? 0;
+    const notes = analytics?.notesCount ?? 0;
+
+    const first = accuracy >= 70
+      ? `Great consistency: accuracy is ${accuracy}%.`
+      : `Accuracy is ${accuracy}%. Add more practice to improve.`;
+
+    const second = upcoming > 0
+      ? `${upcoming} revisions are due this week.`
+      : "No revisions due this week.";
+
+    const third = notes > 0
+      ? `You have ${notes} notes saved for quick recap.`
+      : "No notes found yet; add notes for better retention.";
+
+    return [first, second, third];
+  }, [analytics]);
+
+  const xpCurrent = gami?.user?.points ?? 0;
+  const level = Math.max(1, Math.floor(xpCurrent / 500) + 1);
+  const streakDays = 18; // Mock for now or pull from gami if available
+  const xpTarget = level * 500 + 500;
   const xpPercent = Math.round((xpCurrent / xpTarget) * 100);
 
   const heatmapValues = useMemo(() => {
