@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { CourseSelectorPanel } from "@/components/CourseSelectorPanel";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -114,6 +115,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {/* Course Selector Panel */}
+        {!collapsed && <CourseSelectorPanel />}
       </SidebarContent>
     </Sidebar>
   );
